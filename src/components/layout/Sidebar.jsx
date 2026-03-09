@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAppShell } from "../../contexts/AppShellContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
@@ -11,10 +11,9 @@ const navItems = [
 ];
 
 function Sidebar() {
-  const { copy, language, toggleLanguage, toggleTheme, theme, pageCopy, brandTitle } = useAppShell();
+  const { copy, language, toggleLanguage, toggleTheme, theme, pageCopy, brandTitle, openNewTicket } = useAppShell();
   const { signOut } = useAuth();
   const { showToast } = useToast();
-  const navigate = useNavigate();
 
   async function handleLogout() {
     if (!window.confirm(copy.logoutConfirm)) return;
@@ -23,8 +22,7 @@ function Sidebar() {
   }
 
   function handleNewTicket() {
-    navigate("/tickets");
-    showToast(copy.newTicket, copy.newTicketReady || copy.newTicketRedirect, "good");
+    openNewTicket();
   }
 
   return (

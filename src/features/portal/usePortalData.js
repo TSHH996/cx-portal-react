@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { supabase, supabaseAnonKey, supabaseUrl } from "../../lib/supabase";
 import { normalizeTicket } from "../dashboard/dashboardUtils";
+
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result || "";
+      const base64 = String(result).split(",")[1] || "";
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export function usePortalData(language) {
   const [state, setState] = useState({
@@ -90,6 +103,52 @@ export function usePortalData(language) {
       const { error } = await supabase.from("tickets").update({ status: "Closed" }).eq("id", ticketId);
       if (error) throw error;
       await load();
+    },
+    async createTicket(payload, files = []) {
+      let { data, error } = await supabase.from("tickets").insert([payload]).select("*");
+
+      if (error && error.message && error.message.includes("schema cache")) {
+        const basePayload = { ...payload };
+        delete basePayload.brand;
+        delete basePayload.feedback_type;
+        delete basePayload.feedback_category;
+        delete basePayload.sub_category;
+        ({ data, error } = await supabase.from("tickets").insert([basePayload]).select("*"));
+      }
+
+      if (error) throw error;
+
+      const created = data?.[0];
+      if (created?.id && files.length) {
+        for (const file of files) {
+          const base64 = await fileToBase64(file);
+          const response = await fetch(`${supabaseUrl}/functions/v1/upload-ticket-attachment`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${supabaseAnonKey}`,
+            },
+            body: JSON.stringify({
+              ticket_id: created.id,
+              ticket_no: created.ticket_no,
+              file_name: file.name,
+              mime_type: file.type || "application/octet-stream",
+              file_size: file.size || 0,
+              source: "cx",
+              uploaded_by: "cx portal react",
+              file_base64: base64,
+            }),
+          });
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || "Attachment upload failed.");
+          }
+        }
+      }
+
+      await load();
+      return created;
     },
   }), [load]);
 

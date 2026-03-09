@@ -20,6 +20,12 @@
   --danger: #ef4444;
   --success: #22c55e;
   --shadow: 0 24px 60px rgba(2, 6, 23, 0.32);
+  --fs-title-xl: 1.7rem;
+  --fs-title-lg: 1.18rem;
+  --fs-title-md: .95rem;
+  --fs-body: .84rem;
+  --fs-meta: .74rem;
+  --fs-chip: .72rem;
 }
 
 body[data-theme="light"] {
@@ -38,6 +44,7 @@ body[data-theme="light"] {
 
 * { box-sizing: border-box; }
 html, body, #root { min-width: 320px; min-height: 100%; }
+body, button, input, textarea, select { font-size: 14px; }
 body {
   margin: 0;
   min-height: 100vh;
@@ -63,11 +70,11 @@ body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82);
   display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 1rem;
   background: linear-gradient(135deg, var(--accent), #10b981); color: white; font-weight: 800;
 }
-.eyebrow-text, .filter-block span, .insights-block-label, .stat-label {
-  font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+.eyebrow-text, .filter-block span, .insights-block-label, .stat-label, .rptFilterLabel, .replyCard label, .fieldReact label {
+  font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700;
 }
 .brand-title, .page-title, .section-title { margin: .15rem 0 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
-.brand-subtitle, .team-subtitle, .page-subtitle, .card-subheading, .section-copy, .stat-meta, .nav-subtitle, .compact-meta, .alert-meta, .activity-meta, .panel-note { color: var(--muted); }
+.brand-subtitle, .team-subtitle, .page-subtitle, .card-subheading, .section-copy, .stat-meta, .nav-subtitle, .compact-meta, .alert-meta, .activity-meta, .panel-note { color: var(--muted); font-size: var(--fs-body); line-height: 1.55; }
 .sidebar-label { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); padding-inline: .25rem; }
 .nav-list { display: grid; gap: .55rem; }
 .nav-item {
@@ -77,7 +84,7 @@ body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82);
 .nav-item.active { background: linear-gradient(135deg, var(--accent-soft), rgba(16, 185, 129, .08)); border-color: rgba(79, 140, 255, .34); }
 .nav-icon, .nav-pill, .soft-badge, .status-badge, .keycap { border-radius: 999px; }
 .nav-icon { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; background: rgba(255,255,255,.06); }
-.nav-title, .team-title, .card-heading { font-weight: 800; }
+.nav-title, .team-title, .card-heading, .panel-heading, .rptCardTitle { font-weight: 800; letter-spacing: -.01em; }
 .nav-pill, .soft-badge, .status-badge, .keycap {
   padding: .35rem .75rem; background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--muted); font-size: .8rem;
 }
@@ -101,8 +108,8 @@ body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82);
 .topbar-brand-line { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; }
 .topbar-separator { width: 18px; height: 1px; background: var(--line); }
 .topbar-context-pill { padding: .24rem .55rem; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--muted-strong); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
-.page-title { font-size: 1.7rem; line-height: 1.08; margin: .05rem 0 0; }
-.page-subtitle { font-size: .84rem; line-height: 1.55; margin: .05rem 0 0; max-width: 62ch; }
+.page-title { font-size: var(--fs-title-xl); line-height: 1.08; margin: .05rem 0 0; }
+.page-subtitle { font-size: var(--fs-body); line-height: 1.55; margin: .05rem 0 0; max-width: 62ch; }
 .search-shell {
   display: flex; align-items: center; gap: .65rem; min-width: min(100%, 23rem); padding: .68rem .85rem;
   border-radius: .9rem; border: 1px solid var(--line); background: var(--panel-strong);
@@ -157,8 +164,8 @@ body[data-theme="light"] .filter-block input, body[data-theme="light"] .filter-b
 .list-head, .detail-head {
   padding: 14px 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.05);
 }
-.section-title { font-size: 14px; font-weight: 900; letter-spacing: -.01em; }
-.section-sub, .detail-eyebrow { font-size: 11px; color: var(--muted); }
+.section-title { font-size: var(--fs-title-md); font-weight: 900; letter-spacing: -.01em; }
+.section-sub, .detail-eyebrow { font-size: var(--fs-meta); color: var(--muted); }
 .ticket-rows { max-height: 760px; overflow: auto; }
 .ticket-row {
   width: 100%; padding: 14px 18px; border: 0; border-bottom: 1px solid rgba(255,255,255,.04); background: transparent; color: inherit;
@@ -235,7 +242,7 @@ body[data-theme="light"] .rptDateInput, body[data-theme="light"] .rptSelect { ba
 .rptCard { border-radius: 1.05rem; overflow: hidden; }
 .rptCardHead { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,.05); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .rptCardTitle { font-size: 13px; font-weight: 800; color: var(--text); }
-.rptCardMeta { font-size: 11.5px; color: var(--muted); }
+.rptCardMeta { font-size: var(--fs-meta); color: var(--muted); }
 .rptCardBody { padding: 12px 15px; }
 .rptBarRows { display: flex; flex-direction: column; gap: 8px; }
 .rptBarRow { display: grid; grid-template-columns: 120px 1fr 42px 46px; gap: 8px; align-items: center; }
@@ -373,6 +380,57 @@ body[data-theme="light"] .rptDateInput, body[data-theme="light"] .rptSelect { ba
 .replySubmitWrap { padding: 20px 24px; }
 .replySubmitBtn { display: inline-flex; width: auto; min-width: 220px; justify-content: center; }
 
+.modalOverlayReact {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 9, 15, .76);
+  backdrop-filter: blur(6px);
+}
+.modalCardReact {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border-radius: 1.2rem;
+  border: 1px solid var(--line);
+  background: rgba(11, 17, 34, .97);
+  box-shadow: 0 36px 88px rgba(0, 0, 0, .46);
+}
+.modalHeadReact {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px 13px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.modalTitleReact { font-size: var(--fs-title-lg); font-weight: 900; letter-spacing: -.02em; }
+.modalSubReact { margin-top: 4px; color: var(--muted); font-size: var(--fs-body); line-height: 1.55; }
+.modalBodyReact { padding: 15px 16px; display: grid; gap: 12px; }
+.grid2React { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fieldReact { min-width: 0; }
+.fieldReact.full { grid-column: 1 / -1; }
+.fieldReact input, .fieldReact select, .fieldReact textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+  min-height: 42px;
+}
+.fieldReact textarea { min-height: 112px; resize: vertical; line-height: 1.7; }
+.modalActionsReact {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 13px 16px 16px;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+
 .chart-shell { margin-top: 10px; }
 .chart-grid {
   display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: end; gap: 6px; height: 220px;
@@ -449,6 +507,8 @@ body[data-theme="light"] .rptDateInput, body[data-theme="light"] .rptSelect { ba
 [dir="rtl"] .insight-chip,
 [dir="rtl"] .filter-block span { text-align: right; }
 [dir="rtl"] .lookup-row { grid-template-columns: auto minmax(0, 1fr); }
+[dir="rtl"] .modalHeadReact, [dir="rtl"] .modalBodyReact, [dir="rtl"] .grid2React, [dir="rtl"] .modalActionsReact { direction: rtl; }
+[dir="rtl"] .modalTitleReact, [dir="rtl"] .modalSubReact, [dir="rtl"] .fieldReact input, [dir="rtl"] .fieldReact select, [dir="rtl"] .fieldReact textarea { text-align: right; }
 [dir="rtl"] .rptPageHeader, [dir="rtl"] .rptCardHead, [dir="rtl"] .rptFilterBar, [dir="rtl"] .rptBarRow, [dir="rtl"] .rptNav { direction: rtl; }
 [dir="rtl"] .rptPageTitle, [dir="rtl"] .rptPageSub, [dir="rtl"] .rptBarLabel, [dir="rtl"] .rptExportBtn { text-align: right; }
 [dir="rtl"] .settingsItem, [dir="rtl"] .settingsContentReact, [dir="rtl"] .settingsInput, [dir="rtl"] .field-row, [dir="rtl"] .surface-card-head, [dir="rtl"] .surface-card-body { text-align: right; }
@@ -529,6 +589,7 @@ body[data-theme="light"] .rptDateInput, body[data-theme="light"] .rptSelect { ba
   .loginFormCard { padding: 22px; border-radius: 24px; }
   .replyPageReact { padding: 20px 14px 40px; }
   .replyGridRow { grid-template-columns: 1fr; }
+  .grid2React { grid-template-columns: 1fr; }
   .replyCardSection { padding: 18px; }
   .replySubmitWrap { padding: 16px 18px; }
 }

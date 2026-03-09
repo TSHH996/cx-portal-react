@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
 import Topbar from "../components/layout/Topbar";
+import NewTicketModal from "../components/layout/NewTicketModal";
 import { useAppShell } from "../contexts/AppShellContext";
 
 function pageKeyFromPath(pathname) {
@@ -25,6 +26,7 @@ function PortalLayout() {
           <Outlet />
         </section>
       </main>
+      <NewTicketModal />
     </div>
   );
 }
