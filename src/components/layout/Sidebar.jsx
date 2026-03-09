@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAppShell } from "../../contexts/AppShellContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
@@ -14,11 +14,17 @@ function Sidebar() {
   const { copy, language, toggleLanguage, toggleTheme, theme, pageCopy, brandTitle } = useAppShell();
   const { signOut } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   async function handleLogout() {
     if (!window.confirm(copy.logoutConfirm)) return;
     await signOut();
     showToast(copy.logoutTxt, copy.logoutSuccess, "good");
+  }
+
+  function handleNewTicket() {
+    navigate("/tickets");
+    showToast(copy.newTicket, copy.newTicketReady || copy.newTicketRedirect, "good");
   }
 
   return (
@@ -83,7 +89,7 @@ function Sidebar() {
           </button>
         </div>
 
-        <button type="button" className="primary-btn wide-btn">＋ {copy.newTicket}</button>
+        <button type="button" className="primary-btn wide-btn" onClick={handleNewTicket}>＋ {copy.newTicket}</button>
       </div>
     </aside>
   );
