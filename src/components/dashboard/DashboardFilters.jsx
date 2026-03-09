@@ -1,0 +1,57 @@
+function DashboardFilters({ copy, filters, brandOptions, onChange, onReset }) {
+  return (
+    <section className="surface-card dashboard-filter-row">
+      <div className="dashboard-filter-grid">
+        <label className="filter-block">
+          <span>{copy.dashboardFilterPeriod}</span>
+          <select value={filters.range} onChange={(e) => onChange("range", e.target.value)}>
+            <option value="all">{copy.dashboardRangeAll}</option>
+            <option value="24h">{copy.dashboardRange24h}</option>
+            <option value="7d">{copy.dashboardRange7d}</option>
+            <option value="30d">{copy.dashboardRange30d}</option>
+          </select>
+        </label>
+
+        <label className="filter-block">
+          <span>{copy.dashboardFilterStatus}</span>
+          <select value={filters.status} onChange={(e) => onChange("status", e.target.value)}>
+            <option value="all">{copy.dashboardStatusAll}</option>
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Replied">Replied</option>
+            <option value="Closed">Closed</option>
+          </select>
+        </label>
+
+        <label className="filter-block">
+          <span>{copy.dashboardFilterBrand}</span>
+          <select value={filters.brand} onChange={(e) => onChange("brand", e.target.value)}>
+            <option value="all">{copy.insightsAllBrands}</option>
+            {brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+          </select>
+        </label>
+
+        <label className="filter-block">
+          <span>{copy.dashboardFilterPriority}</span>
+          <select value={filters.priority} onChange={(e) => onChange("priority", e.target.value)}>
+            <option value="all">{copy.dashboardPriorityAll}</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </label>
+
+        <label className="filter-block branch-block">
+          <span>{copy.dashboardFilterBranch}</span>
+          <input value={filters.branchQuery} onChange={(e) => onChange("branchQuery", e.target.value)} placeholder={copy.dashboardBranchPlaceholder} />
+        </label>
+
+        <div className="filter-block action-block">
+          <button type="button" className="ghost-btn" onClick={onReset}>{copy.dashboardReset}</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default DashboardFilters;
