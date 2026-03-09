@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: "./",
+  base: "/cx-portal-react/",
   plugins: [react()],
   build: {
     chunkSizeWarningLimit: 650,

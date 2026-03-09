@@ -5,10 +5,11 @@
     <title>CX Portal React Redirect</title>
     <script>
       (function () {
+        var base = "/cx-portal-react/";
         var path = window.location.pathname;
         var search = window.location.search || "";
         var hash = window.location.hash || "";
-        var redirect = window.location.origin + path.replace(/\/[^/]*$/, "/") + "index.html?redirect=" + encodeURIComponent(path + search + hash);
+        var redirect = window.location.origin + base + "?redirect=" + encodeURIComponent(path + search + hash);
         window.location.replace(redirect);
       })();
     </script>
