@@ -1,5 +1,5 @@
 import { buildMultiValueBreakdown, formatMultiValue, hasMultiValue, splitMultiValue } from "../../lib/multiValue";
-import { getLocalizedCategory, getLocalizedCity, getLocalizedPriority, getLocalizedSlaStatus, getLocalizedSource, getLocalizedStatus, getLocalizedSubCategory } from "../portal/newTicketConfig";
+import { CITIES, getLocalizedCategory, getLocalizedCity, getLocalizedPriority, getLocalizedSlaStatus, getLocalizedSource, getLocalizedStatus, getLocalizedSubCategory } from "../portal/newTicketConfig";
 
 export function pad(value) {
   return String(value).padStart(2, "0");
@@ -284,6 +284,26 @@ export function buildVolumeBars(filteredTickets) {
     height: Math.max(8, Math.round((entry.count / peak) * 100)),
     delay: `${0.04 * (index + 1)}s`,
   }));
+}
+
+export function buildCityVolumeRows(filteredTickets) {
+  const counts = Object.fromEntries(CITIES.map((city) => [city, 0]));
+
+  filteredTickets.forEach((ticket) => {
+    const city = getTicketCity(ticket);
+    if (Object.hasOwn(counts, city)) counts[city] += 1;
+  });
+
+  const total = filteredTickets.length;
+
+  return CITIES.map((city) => {
+    const count = counts[city] || 0;
+    return {
+      label: city,
+      count,
+      pct: total > 0 ? Math.round((count / total) * 100) : 0,
+    };
+  }).sort((a, b) => b.count - a.count || CITIES.indexOf(a.label) - CITIES.indexOf(b.label));
 }
 
 export function buildOperationalAlerts(filteredTickets, language) {

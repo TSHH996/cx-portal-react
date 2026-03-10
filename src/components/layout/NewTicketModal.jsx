@@ -7,14 +7,35 @@ import { BRANDS, computeSlaDueAt, CUSTOMER_CONTACT_STATUSES, CUSTOMER_SATISFIED_
 import { usePortalData } from "../../features/portal/usePortalData";
 import { joinMultiValue } from "../../lib/multiValue";
 
+function formatDatePart(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function formatTimePart(date) {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function buildComplaintDateTime(datePart, timePart) {
+  if (!datePart || !timePart) return null;
+  return `${datePart}T${timePart}`;
+}
+
+function normalizePhoneInput(value) {
+  return String(value || "").replace(/\D/g, "").slice(0, 10);
+}
+
+function isValidSaudiMobilePhone(value) {
+  return /^05\d{8}$/.test(String(value || ""));
+}
+
 function initialForm(copy) {
   const now = new Date();
-  const localDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
   return {
     customer_name: copy.customerNameDefault || "Test Customer",
     customer_phone: copy.customerPhoneDefault || "0500000000",
-    complaint_at: localDateTime,
+    complaint_date: formatDatePart(now),
+    complaint_time: formatTimePart(now),
     initial_action_taken: "No",
     initial_action_type: "",
     initial_customer_contact_status: "",
@@ -100,6 +121,10 @@ function NewTicketModal() {
   const statusOptions = useMemo(() => getLocalizedStatusOptions(language), [language]);
   const sourceOptions = useMemo(() => getLocalizedSourceOptions(language), [language]);
   const categoryOptions = useMemo(() => getLocalizedCategoryOptions(language), [language]);
+  const complaintDateTimeValue = buildComplaintDateTime(form.complaint_date, form.complaint_time);
+  const phoneError = form.customer_phone && !isValidSaudiMobilePhone(form.customer_phone)
+    ? copy.customerPhoneValidation || "Enter a valid Saudi mobile number with exactly 10 digits starting with 05."
+    : "";
 
   const filteredBranches = useMemo(
     () => (form.city ? normalizedBranches.filter((branch) => branch.city === form.city) : normalizedBranches),
@@ -162,12 +187,23 @@ function NewTicketModal() {
       return;
     }
 
+    if (!isValidSaudiMobilePhone(form.customer_phone)) {
+      showToast(copy.newTicketTitle || copy.newTicket, copy.customerPhoneValidation || "Enter a valid Saudi mobile number with exactly 10 digits starting with 05.", "bad");
+      return;
+    }
+
+    if (!complaintDateTimeValue) {
+      showToast(copy.newTicketTitle || copy.newTicket, copy.complaintDateTimeValidation || "Select both complaint date and complaint time.", "bad");
+      return;
+    }
+
     try {
       setBusy(true);
       const payload = {
         customer_name: form.customer_name.trim() || copy.customerNameDefault || "Test Customer",
         customer_phone: form.customer_phone.trim() || copy.customerPhoneDefault || "0500000000",
-        complaint_at: form.complaint_at ? new Date(form.complaint_at).toISOString() : null,
+        complaint_at: new Date(complaintDateTimeValue).toISOString(),
+        complaint_display: `${form.complaint_date} ${form.complaint_time}`,
         created_by_name: profile?.name || null,
         created_by_email: profile?.email || null,
         initial_action_taken: form.initial_action_taken || "No",
@@ -220,7 +256,7 @@ function NewTicketModal() {
         <div className="modalBodyReact">
           <div className="grid2React">
             <div className="fieldReact"><label>{copy.labelCustomerName || "Customer Name"}</label><input dir="auto" value={form.customer_name} onChange={(e) => setForm((current) => ({ ...current, customer_name: e.target.value }))} /></div>
-            <div className="fieldReact"><label>{copy.labelCustomerPhone || "Customer Phone"}</label><input dir="auto" value={form.customer_phone} onChange={(e) => setForm((current) => ({ ...current, customer_phone: e.target.value }))} /></div>
+            <div className="fieldReact"><label>{copy.labelCustomerPhone || "Customer Phone"}</label><input dir="auto" type="tel" inputMode="numeric" maxLength={10} placeholder={copy.customerPhonePlaceholder || "05xxxxxxxx"} value={form.customer_phone} onChange={(e) => setForm((current) => ({ ...current, customer_phone: normalizePhoneInput(e.target.value) }))} className={phoneError ? "is-invalid" : ""} />{phoneError ? <div className="fieldError">{phoneError}</div> : null}</div>
           </div>
 
           <div className="grid2React">
@@ -228,7 +264,25 @@ function NewTicketModal() {
             <div className="fieldReact"><label>{copy.labelCreatedByEmail || "Created By Email"}</label><input dir="auto" value={profile?.email || ""} readOnly /></div>
           </div>
 
-          <div className="fieldReact full"><label>{copy.labelComplaintDateTime || "Complaint Date & Time"}</label><input dir="auto" type="datetime-local" value={form.complaint_at} onChange={(e) => setForm((current) => ({ ...current, complaint_at: e.target.value }))} placeholder={copy.optionSelectDateTime || "Select date and time"} /></div>
+          <div className="fieldReact full">
+            <label>{copy.labelComplaintDateTime || "Complaint Date & Time"}</label>
+            <div className="ticketDateTimeGrid">
+              <div className="ticketDateTimeField">
+                <span className="ticketDateTimeLabel">{copy.labelComplaintDate || "Complaint Date"}</span>
+                <div className="ticketDateInputWrap">
+                  <input dir="ltr" lang="en" type="date" className="ticketDateInput" value={form.complaint_date} onChange={(e) => setForm((current) => ({ ...current, complaint_date: e.target.value }))} />
+                  <span className="ticketDateIcon" aria-hidden="true">📅</span>
+                </div>
+              </div>
+              <div className="ticketDateTimeField">
+                <span className="ticketDateTimeLabel">{copy.labelComplaintTime || "Complaint Time"}</span>
+                <div className="ticketDateInputWrap">
+                  <input dir="ltr" lang="en" type="time" className="ticketDateInput" value={form.complaint_time} onChange={(e) => setForm((current) => ({ ...current, complaint_time: e.target.value }))} />
+                  <span className="ticketDateIcon" aria-hidden="true">🕒</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="grid2React">
             <div className="fieldReact"><label>{copy.labelCity || "City"}</label><select dir="auto" value={form.city} onChange={(e) => handleCityChange(e.target.value)}><option value="">{copy.optionSelectCity || "Select city"}</option>{cityOptions.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}</select></div>

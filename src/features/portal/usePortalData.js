@@ -201,11 +201,14 @@ export function usePortalData(language) {
       await updateTicketStatus(ticketId, "Closed");
     },
     async createTicket(payload, files = []) {
-      let { data, error } = await supabase.from("tickets").insert([payload]).select("*");
+      const insertPayload = { ...payload };
+      delete insertPayload.complaint_display;
+
+      let { data, error } = await supabase.from("tickets").insert([insertPayload]).select("*");
 
       if (error && error.message && error.message.includes("schema cache")) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        ({ data, error } = await supabase.from("tickets").insert([payload]).select("*"));
+        ({ data, error } = await supabase.from("tickets").insert([insertPayload]).select("*"));
       }
 
       if (error) throw error;
@@ -262,9 +265,8 @@ export function usePortalData(language) {
           .order("created_at", { ascending: true });
 
         if (branch?.branch_email) {
-          const complaintDisplay = payload.complaint_at
-            ? new Date(payload.complaint_at).toISOString().slice(0, 16).replace("T", " ")
-            : null;
+          const complaintDisplay = payload.complaint_display
+            || (payload.complaint_at ? String(payload.complaint_at).replace("T", " ").slice(0, 16) : null);
 
           const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-branch-email`, {
             method: "POST",

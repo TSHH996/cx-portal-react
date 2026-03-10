@@ -505,6 +505,9 @@ body[data-theme="light"] .rptSelect, body[data-theme="light"] .rptDateTrigger { 
   border-radius: 12px;
   min-height: 42px;
 }
+.fieldReact input::placeholder, .fieldReact textarea::placeholder { color: var(--muted); }
+.fieldReact input.is-invalid { border-color: rgba(239,68,68,.55); box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
+.fieldError { margin-top: 6px; color: #fca5a5; font-size: 11.5px; line-height: 1.5; }
 .fieldReact select,
 .filter-block select,
 .rptSelect,
@@ -549,6 +552,33 @@ body[data-theme="light"] .replyCard select option {
 }
 .fieldReact textarea { min-height: 112px; resize: vertical; line-height: 1.7; }
 .fieldReact select[multiple] { appearance: auto; -webkit-appearance: auto; background-image: none; padding-inline-end: 12px; min-height: 110px; }
+.ticketDateTimeGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ticketDateTimeField { display: grid; gap: 8px; }
+.ticketDateTimeLabel { font-size: 11px; color: var(--muted); font-weight: 700; }
+.ticketDateInputWrap { position: relative; }
+.ticketDateInput {
+  width: 100%;
+  min-height: 44px;
+  padding-inline-start: 12px;
+  padding-inline-end: 38px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  color-scheme: dark;
+  font-variant-numeric: tabular-nums;
+}
+.ticketDateInput::-webkit-calendar-picker-indicator { opacity: .0; cursor: pointer; }
+.ticketDateInput::-webkit-date-and-time-value { text-align: left; }
+.ticketDateIcon {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 15px;
+}
 .multiPickField {
   border: 1px solid var(--line);
   background: rgba(255,255,255,.035);
@@ -611,6 +641,20 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
 .chart-xlabel { font-size: 11px; color: var(--muted); }
 .chart-label-row { display: flex; justify-content: space-between; gap: .75rem; margin-top: 10px; font-size: 12px; color: var(--muted-strong); }
 .footer-note { margin-top: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.04); }
+.city-volume-card { display: grid; gap: 12px; }
+.city-volume-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.city-volume-summary { min-width: 108px; padding: 12px 14px; border: 1px solid rgba(79,140,255,.18); border-radius: 14px; background: linear-gradient(135deg, rgba(79,140,255,.12), rgba(16,185,129,.08)); text-align: right; }
+.city-volume-total { font-size: 28px; font-weight: 900; line-height: 1; }
+.city-volume-meta { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.city-volume-feature { border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.03); padding: 14px; }
+.city-volume-feature-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.city-volume-feature-value { margin-top: 6px; font-size: 20px; font-weight: 900; }
+.city-volume-feature-meta { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.city-volume-list { display: grid; gap: 8px; }
+.city-volume-row { border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.03); padding: 10px 12px; }
+.city-volume-row-head { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; font-weight: 700; }
+.city-volume-track { height: 7px; border-radius: 999px; background: rgba(148,163,184,.16); margin-top: 8px; overflow: hidden; }
+.city-volume-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #38bdf8, #2563eb); }
 
 .breakdown-list, .compact-list, .alerts-list, .activity-list, .insights-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .breakdown-row, .compact-row, .alert-row, .activity-row, .insights-list-item {
@@ -659,6 +703,8 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
 .auth-shell .placeholder-page { width: min(100%, 52rem); }
 
 [dir="rtl"] .dashboard-filter-grid,
+[dir="rtl"] .city-volume-head,
+[dir="rtl"] .city-volume-row-head,
 [dir="rtl"] .breakdown-head,
 [dir="rtl"] .compact-head,
 [dir="rtl"] .activity-head,
@@ -744,7 +790,7 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
   .dashboard-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filter-block, .filter-block.branch-block, .filter-block.action-block { grid-column: span 1; }
   .insights-controls-grid, .insight-grid, .insights-metrics { grid-template-columns: 1fr; }
-  .ticket-kv-grid, .resolution-grid, .resolution-summary-grid { grid-template-columns: 1fr; }
+  .ticket-kv-grid, .resolution-grid, .resolution-summary-grid, .ticketDateTimeGrid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 720px) {

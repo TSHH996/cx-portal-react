@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
 import AlertsCard from "../components/dashboard/AlertsCard";
 import BreakdownCard from "../components/dashboard/BreakdownCard";
+import CityVolumeCard from "../components/dashboard/CityVolumeCard";
 import CompactCard from "../components/dashboard/CompactCard";
 import DashboardFilters from "../components/dashboard/DashboardFilters";
 import KpiGrid from "../components/dashboard/KpiGrid";
 import RecentActivityCard from "../components/dashboard/RecentActivityCard";
 import SmartInsightsPanel from "../components/dashboard/SmartInsightsPanel";
-import TrendCard from "../components/dashboard/TrendCard";
 import { useAppShell } from "../contexts/AppShellContext";
-import { buildDashboardMetrics, buildOperationalAlerts, buildRecentActivity, buildVolumeBars, filterDashboardTickets, getDashboardCollections } from "../features/dashboard/dashboardUtils";
+import { buildCityVolumeRows, buildDashboardMetrics, buildOperationalAlerts, buildRecentActivity, filterDashboardTickets, getDashboardCollections } from "../features/dashboard/dashboardUtils";
 import { CITIES } from "../features/portal/newTicketConfig";
 import { usePortalData } from "../features/portal/usePortalData";
 
@@ -31,7 +31,7 @@ function DashboardPage() {
   const collections = useMemo(() => getDashboardCollections(filteredTickets), [filteredTickets]);
   const alerts = useMemo(() => buildOperationalAlerts(filteredTickets, language), [filteredTickets, language]);
   const recentActivity = useMemo(() => buildRecentActivity(filteredTickets), [filteredTickets]);
-  const bars = useMemo(() => buildVolumeBars(filteredTickets), [filteredTickets]);
+  const cityRows = useMemo(() => buildCityVolumeRows(filteredTickets), [filteredTickets]);
 
   const systemMessage = error
     ? `${copy.ticketLoadError}: ${error}`
@@ -78,7 +78,7 @@ function DashboardPage() {
 
       <div className="dashboard-grid">
         <div className="dashboard-main-col">
-          <TrendCard copy={copy} bars={bars} totalCount={filteredTickets.length} systemMessage={systemMessage} />
+          <CityVolumeCard copy={copy} rows={cityRows} totalCount={filteredTickets.length} systemMessage={systemMessage} />
 
           <div className="analytics-split">
             <BreakdownCard title={copy.breakdownSourceTitle} subtitle={copy.breakdownSourceSub} rows={collections.source} emptyText={copy.noData} />
