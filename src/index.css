@@ -92,7 +92,7 @@ body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82);
 .soft-badge.warn, .ghost-btn.warn { border-color: rgba(245,158,11,.35); color: #fbbf24; }
 .soft-badge.bad { border-color: rgba(239,68,68,.35); color: #fca5a5; }
 .status-badge.good { color: #dcfce7; background: rgba(34,197,94,.18); }
-.sidebar-spacer { flex: 1; }
+.sidebar-footer { margin-top: auto; display: flex; flex-direction: column; gap: .72rem; }
 .badge-row, .toggle-row, .topbar-actions { flex-wrap: wrap; }
 .ghost-btn, .primary-btn {
   border-radius: .85rem; border: 1px solid var(--line); padding: .72rem .92rem; background: var(--panel); color: var(--text);

@@ -58,8 +58,6 @@ function Sidebar() {
         })}
       </nav>
 
-      <div className="sidebar-spacer" />
-
       <div className="sidebar-footer">
         <div className="team-card">
           <div className="team-avatar">CX</div>
