@@ -7,9 +7,13 @@ import { usePortalData } from "../../features/portal/usePortalData";
 import { joinMultiValue } from "../../lib/multiValue";
 
 function initialForm(copy) {
+  const now = new Date();
+  const localDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
   return {
     customer_name: copy.customerNameDefault || "Test Customer",
     customer_phone: copy.customerPhoneDefault || "0500000000",
+    complaint_at: localDateTime,
     city: "",
     branch_name: "",
     brand: "",
@@ -156,6 +160,7 @@ function NewTicketModal() {
       const payload = {
         customer_name: form.customer_name.trim() || copy.customerNameDefault || "Test Customer",
         customer_phone: form.customer_phone.trim() || copy.customerPhoneDefault || "0500000000",
+        complaint_at: form.complaint_at ? new Date(form.complaint_at).toISOString() : null,
         branch_name: form.branch_name.trim(),
         brand: form.brand.trim(),
         feedback_type: form.feedback_type.trim(),
@@ -167,8 +172,14 @@ function NewTicketModal() {
         sla_due_at: computeSlaDueAt(form.priority),
         sla_status: "pending",
       };
-      await createTicket(payload, form.files);
-      showToast(copy.newTicketTitle || copy.newTicket, copy.createSuccess || "Ticket created successfully.", "good");
+      const created = await createTicket(payload, form.files);
+      showToast(
+        copy.newTicketTitle || copy.newTicket,
+        created?.emailError
+          ? `${copy.createSuccess || "Ticket created successfully."} ${copy.emailSendWarning || "Branch email could not be delivered automatically."}`
+          : copy.createSuccess || "Ticket created successfully.",
+        created?.emailError ? "warn" : "good"
+      );
       setForm(initialForm(copy));
       closeNewTicket();
       navigate("/tickets");
@@ -196,6 +207,8 @@ function NewTicketModal() {
             <div className="fieldReact"><label>{copy.labelCustomerName || "Customer Name"}</label><input dir="auto" value={form.customer_name} onChange={(e) => setForm((current) => ({ ...current, customer_name: e.target.value }))} /></div>
             <div className="fieldReact"><label>{copy.labelCustomerPhone || "Customer Phone"}</label><input dir="auto" value={form.customer_phone} onChange={(e) => setForm((current) => ({ ...current, customer_phone: e.target.value }))} /></div>
           </div>
+
+          <div className="fieldReact full"><label>{copy.labelComplaintDateTime || "Complaint Date & Time"}</label><input dir="auto" type="datetime-local" value={form.complaint_at} onChange={(e) => setForm((current) => ({ ...current, complaint_at: e.target.value }))} placeholder={copy.optionSelectDateTime || "Select date and time"} /></div>
 
           <div className="grid2React">
             <div className="fieldReact"><label>{copy.labelCity || "City"}</label><select dir="auto" value={form.city} onChange={(e) => handleCityChange(e.target.value)}><option value="">{copy.optionSelectCity || "Select city"}</option>{cityOptions.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}</select></div>

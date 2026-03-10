@@ -3,14 +3,16 @@ import TicketDetailPane from "../components/tickets/TicketDetailPane";
 import TicketsFiltersSidebar from "../components/tickets/TicketsFiltersSidebar";
 import TicketsListPane from "../components/tickets/TicketsListPane";
 import { useAppShell } from "../contexts/AppShellContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { usePortalData } from "../features/portal/usePortalData";
 import { filterTickets } from "../features/tickets/ticketUtils";
 
 function TicketsPage() {
   const { language, copy, searchQuery, setSearchQuery } = useAppShell();
+  const { profile } = useAuth();
   const { showToast } = useToast();
-  const { tickets, branches, loading, error, saveReply, markReplied, closeTicket } = usePortalData(language);
+  const { tickets, branches, loading, error, saveReply, saveCustomerResolution, markReplied, closeTicket } = usePortalData(language);
   const [filters, setFilters] = useState({ status: "all", priority: "all", branch: "all" });
   const branchOptions = useMemo(() => branches.map((branch) => branch.branch_name), [branches]);
   const [selectedId, setSelectedId] = useState(null);
@@ -61,6 +63,7 @@ function TicketsPage() {
         key={selectedTicket?.rowId || "empty"}
         copy={copy}
         ticket={selectedTicket}
+        handledByDefault={profile?.name || profile?.email || ""}
         busy={busy || loading}
         onSaveReply={async (_ticketId, replyText) => {
           if (!selectedTicket?.rowId) return;
@@ -72,6 +75,25 @@ function TicketsPage() {
           try {
             await saveReply(selectedTicket.rowId, replyText.trim());
             showToast(copy.branchReplyTitle, copy.saveReplySuccess || copy.btnSaveReplyTxt, "good");
+          } catch (actionError) {
+            showToast(copy.ticketLoadError, actionError?.message || copy.ticketLoadError, "bad");
+          } finally {
+            setBusy(false);
+          }
+        }}
+        onSaveResolution={async (_ticketId, resolutionForm) => {
+          if (!selectedTicket?.rowId) return;
+
+          const payload = {
+            ...resolutionForm,
+            resolution_handled_by: resolutionForm.resolution_handled_by || profile?.name || profile?.email || "",
+            resolution_date: resolutionForm.resolution_date ? new Date(`${resolutionForm.resolution_date}T00:00:00`).toISOString() : null,
+          };
+
+          setBusy(true);
+          try {
+            await saveCustomerResolution(selectedTicket.rowId, payload);
+            showToast(copy.customerResolutionTitle, copy.resolutionSavedText, "good");
           } catch (actionError) {
             showToast(copy.ticketLoadError, actionError?.message || copy.ticketLoadError, "bad");
           } finally {

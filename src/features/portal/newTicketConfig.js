@@ -17,6 +17,9 @@ export const FEEDBACK_TYPES = ["Google Review", "Dine In Survey (0-6)", "App Sur
 export const FEEDBACK_CATEGORIES = Object.keys(SUB_CATEGORIES);
 export const PRIORITIES = ["High", "Medium", "Low"];
 export const STATUSES = ["Open", "In Progress", "Replied", "Closed"];
+export const RESOLUTION_ACTION_TYPES = ["Apology only", "Coupon issued", "Refund", "Replacement meal", "Escalated", "No action needed", "Other"];
+export const CUSTOMER_CONTACT_STATUSES = ["Contacted", "Not Contacted Yet", "Follow-up Pending", "Customer Unreachable", "No direct contact available (Google Review)", "Resolved before contact"];
+export const CUSTOMER_SATISFIED_OPTIONS = ["Yes", "No", "Pending"];
 
 const CITY_BY_LOWERCASE = Object.fromEntries(CITIES.map((city) => [city.toLowerCase(), city]));
 

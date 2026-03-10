@@ -187,6 +187,7 @@ body[data-theme="light"] .filter-block input, body[data-theme="light"] .filter-b
 .panel-card, .tickets-list-card, .ticket-detail-card { border-radius: 1.15rem; border: 1px solid var(--line); background: var(--panel); min-width: 0; box-shadow: var(--shadow); }
 .panel-card { padding: 14px; }
 .panel-heading { font-size: 14px; font-weight: 800; margin-bottom: 10px; }
+.panel-heading.small { font-size: 12px; margin-bottom: 8px; color: var(--muted-strong); }
 .filter-stack { display: flex; flex-direction: column; gap: 8px; }
 .filter-footer { margin-top: 12px; }
 
@@ -219,6 +220,20 @@ body[data-theme="light"] .filter-block input, body[data-theme="light"] .filter-b
 .ticket-kv-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; font-size: 12.5px; color: var(--muted); }
 .ticket-kv-grid div { padding: 10px 12px; border: 1px solid rgba(255,255,255,.06); border-radius: 14px; background: rgba(255,255,255,.02); }
 .ticket-kv-grid b { color: var(--text); }
+.detail-section-divider { height: 1px; background: rgba(255,255,255,.06); margin: 14px 0; }
+.detail-section-card { display: grid; gap: 12px; }
+.detail-section-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.detail-section-stack { display: grid; gap: 12px; }
+.detail-highlight-card {
+  border: 1px solid rgba(79,140,255,.18);
+  background: linear-gradient(135deg, rgba(79,140,255,.10), rgba(16,185,129,.05));
+  border-radius: 16px;
+  padding: 14px;
+}
+.reply-box-managed textarea { min-height: 140px; }
+.resolution-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.resolution-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.resolution-summary-notes { grid-column: 1 / -1; }
 .mono-block { white-space: pre-wrap; word-break: break-word; }
 .reply-box { display: flex; gap: 10px; flex-direction: column; }
 .reply-box textarea {
@@ -695,6 +710,8 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
 [dir="rtl"] .ticket-row,
 [dir="rtl"] .detail-left,
 [dir="rtl"] .panel-card,
+[dir="rtl"] .detail-highlight-card,
+[dir="rtl"] .resolution-summary-grid,
 [dir="rtl"] .attachments-list,
 [dir="rtl"] .reply-box textarea,
 [dir="rtl"] .ticket-kv-grid div,
@@ -727,7 +744,7 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
   .dashboard-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filter-block, .filter-block.branch-block, .filter-block.action-block { grid-column: span 1; }
   .insights-controls-grid, .insight-grid, .insights-metrics { grid-template-columns: 1fr; }
-  .ticket-kv-grid { grid-template-columns: 1fr; }
+  .ticket-kv-grid, .resolution-grid, .resolution-summary-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 720px) {

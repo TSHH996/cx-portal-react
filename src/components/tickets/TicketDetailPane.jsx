@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CUSTOMER_CONTACT_STATUSES, CUSTOMER_SATISFIED_OPTIONS, RESOLUTION_ACTION_TYPES } from "../../features/portal/newTicketConfig";
 import { fmtDate } from "../../features/dashboard/dashboardUtils";
 import { buildTimeline, ticketInfoRows } from "../../features/tickets/ticketUtils";
 import { splitMultiValue } from "../../lib/multiValue";
@@ -25,8 +26,27 @@ function renderInfoValue(value) {
   );
 }
 
-function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, onAssign, onAddNote, busy }) {
+function toDateInputValue(timestamp) {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function initialResolutionForm(ticket, handledByDefault) {
+  return {
+    resolution_action_type: ticket?.resolutionActionType || "",
+    customer_contact_status: ticket?.customerContactStatus || "",
+    customer_satisfied: ticket?.customerSatisfied || "",
+    resolution_date: toDateInputValue(ticket?.resolutionDate),
+    resolution_handled_by: ticket?.resolutionHandledBy || handledByDefault || "",
+    resolution_details: ticket?.resolutionDetails || "",
+  };
+}
+
+function TicketDetailPane({ copy, ticket, handledByDefault, onSaveReply, onSaveResolution, onMarkReplied, onClose, onAssign, onAddNote, busy }) {
   const [replyText, setReplyText] = useState(ticket?.branchReply || "");
+  const [resolutionForm, setResolutionForm] = useState(initialResolutionForm(ticket, handledByDefault));
 
   const infoRows = ticketInfoRows(ticket, copy.ticketInfoLabels || {});
   const timeline = buildTimeline(ticket, copy);
@@ -45,6 +65,16 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
     );
   }
 
+  const hasReply = Boolean(ticket.branchReply);
+  const hasResolution = Boolean(
+    ticket.resolutionActionType
+      || ticket.customerContactStatus
+      || ticket.customerSatisfied
+      || ticket.resolutionDate
+      || ticket.resolutionHandledBy
+      || ticket.resolutionDetails
+  );
+
   return (
     <section className="ticket-detail-card">
       <div className="detail-head">
@@ -62,15 +92,13 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
 
       <div className="detail-body-grid">
         <article className="panel-card">
-          <div className="panel-heading">{copy.ticketInfoTitle}</div>
+          <div className="panel-heading">{copy.complaintDetailsTitle || copy.ticketInfoTitle}</div>
           <div className="ticket-kv-grid">
             {infoRows.map(([label, value]) => <div key={label}><b>{label}:</b> {renderInfoValue(value)}</div>)}
           </div>
-        </article>
-
-        <article className="panel-card">
-          <div className="panel-heading">{copy.descriptionTitle}</div>
-          <div className="mono-block">{ticket.description || "--"}</div>
+          <div className="detail-section-divider" />
+          <div className="panel-heading small">{copy.descriptionTitle}</div>
+          <div className="mono-block"><bdi className="data-value">{ticket.description || "--"}</bdi></div>
         </article>
 
         <article className="panel-card">
@@ -84,15 +112,91 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
           </div>
         </article>
 
-        <article className="panel-card">
-          <div className="panel-heading">{copy.branchReplyTitle}</div>
-          <div className="reply-box">
-            <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={copy.branchReplyPlaceholder} />
-            <div className="inline-actions">
-              <button type="button" className="primary-btn" onClick={() => onSaveReply(ticket.rowId, replyText)} disabled={busy}>{copy.btnSaveReplyTxt}</button>
-              <button type="button" className="ghost-btn warn" onClick={() => onMarkReplied(ticket.rowId)} disabled={busy}>{copy.btnMarkRepliedTxt}</button>
+        <article className="panel-card detail-section-card">
+          <div className="detail-section-head">
+            <div>
+              <div className="panel-heading">{copy.branchReplyTitle}</div>
+              <div className="panel-note">{copy.branchReplySub}</div>
             </div>
-            <div className="panel-note">{ticket.replyAt ? `${copy.replyByMeta} ${ticket.replyBy || copy.replyByBranchTimeline} • ${fmtDate(ticket.replyAt)}` : copy.noBranchReplyYet}</div>
+            <div className="panel-note">{ticket.replyAt ? `${copy.branchReplyMeta}: ${fmtDate(ticket.replyAt)}` : copy.branchReplyEmpty}</div>
+          </div>
+
+          <div className="detail-section-stack">
+            <div className="detail-highlight-card">
+              <div className="panel-heading small">{copy.branchReplyLatestTitle}</div>
+              <div className="mono-block"><bdi className="data-value">{ticket.branchReply || copy.branchReplyEmpty}</bdi></div>
+            </div>
+
+            <div className="reply-box reply-box-managed">
+              <textarea dir="auto" value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={copy.branchReplyPlaceholder} />
+              <div className="inline-actions">
+                <button type="button" className="primary-btn" onClick={() => onSaveReply(ticket.rowId, replyText)} disabled={busy}>{hasReply ? (copy.btnUpdateReplyTxt || copy.btnSaveReplyTxt) : copy.btnSaveReplyTxt}</button>
+                <button type="button" className="ghost-btn warn" onClick={() => onMarkReplied(ticket.rowId)} disabled={busy}>{copy.btnMarkRepliedTxt}</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article className="panel-card detail-section-card">
+          <div className="detail-section-head">
+            <div>
+              <div className="panel-heading">{copy.customerResolutionTitle}</div>
+              <div className="panel-note">{copy.customerResolutionSub}</div>
+            </div>
+            <div className="panel-note">{ticket.resolutionUpdatedAt ? `${copy.branchReplyMeta}: ${fmtDate(ticket.resolutionUpdatedAt)}` : copy.resolutionEmpty}</div>
+          </div>
+
+          <div className="detail-section-stack">
+            {hasResolution ? (
+              <div className="detail-highlight-card resolution-summary-grid">
+                <div><b>{copy.resolutionActionTypeLabel}:</b> <bdi className="data-value">{ticket.resolutionActionType || "--"}</bdi></div>
+                <div><b>{copy.resolutionContactStatusLabel}:</b> <bdi className="data-value">{ticket.customerContactStatus || "--"}</bdi></div>
+                <div><b>{copy.resolutionSatisfiedLabel}:</b> <bdi className="data-value">{ticket.customerSatisfied || "--"}</bdi></div>
+                <div><b>{copy.resolutionDateLabel}:</b> <bdi className="data-value">{ticket.resolutionDate ? fmtDate(ticket.resolutionDate) : "--"}</bdi></div>
+                <div><b>{copy.resolutionHandledByLabel}:</b> <bdi className="data-value">{ticket.resolutionHandledBy || "--"}</bdi></div>
+                <div className="resolution-summary-notes"><b>{copy.resolutionDetailsLabel}:</b> <bdi className="data-value">{ticket.resolutionDetails || "--"}</bdi></div>
+              </div>
+            ) : null}
+
+            <div className="resolution-grid">
+              <div className="fieldReact">
+                <label>{copy.resolutionActionTypeLabel}</label>
+                <select dir="auto" value={resolutionForm.resolution_action_type} onChange={(e) => setResolutionForm((current) => ({ ...current, resolution_action_type: e.target.value }))}>
+                  <option value="">--</option>
+                  {RESOLUTION_ACTION_TYPES.map((value) => <option key={value} value={value}>{value}</option>)}
+                </select>
+              </div>
+              <div className="fieldReact">
+                <label>{copy.resolutionContactStatusLabel}</label>
+                <select dir="auto" value={resolutionForm.customer_contact_status} onChange={(e) => setResolutionForm((current) => ({ ...current, customer_contact_status: e.target.value }))}>
+                  <option value="">--</option>
+                  {CUSTOMER_CONTACT_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}
+                </select>
+              </div>
+              <div className="fieldReact">
+                <label>{copy.resolutionSatisfiedLabel}</label>
+                <select dir="auto" value={resolutionForm.customer_satisfied} onChange={(e) => setResolutionForm((current) => ({ ...current, customer_satisfied: e.target.value }))}>
+                  <option value="">--</option>
+                  {CUSTOMER_SATISFIED_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+                </select>
+              </div>
+              <div className="fieldReact">
+                <label>{copy.resolutionDateLabel}</label>
+                <input dir="auto" type="date" value={resolutionForm.resolution_date} onChange={(e) => setResolutionForm((current) => ({ ...current, resolution_date: e.target.value }))} />
+              </div>
+              <div className="fieldReact full">
+                <label>{copy.resolutionHandledByLabel}</label>
+                <input dir="auto" value={resolutionForm.resolution_handled_by} onChange={(e) => setResolutionForm((current) => ({ ...current, resolution_handled_by: e.target.value }))} />
+              </div>
+              <div className="fieldReact full">
+                <label>{copy.resolutionDetailsLabel}</label>
+                <textarea dir="auto" value={resolutionForm.resolution_details} onChange={(e) => setResolutionForm((current) => ({ ...current, resolution_details: e.target.value }))} placeholder={copy.resolutionDetailsPlaceholder} />
+              </div>
+            </div>
+
+            <div className="inline-actions">
+              <button type="button" className="primary-btn" onClick={() => onSaveResolution(ticket.rowId, resolutionForm)} disabled={busy}>{hasResolution ? copy.resolutionUpdateTxt : copy.resolutionSaveTxt}</button>
+            </div>
           </div>
         </article>
 

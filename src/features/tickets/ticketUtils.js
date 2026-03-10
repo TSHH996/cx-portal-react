@@ -31,19 +31,50 @@ export function ticketInfoRows(ticket, labels) {
     [labels.phone, ticket.customerPhone],
     [labels.assigned, ticket.assignedTo || "--"],
     [labels.created, fmtDate(ticket.createdAt)],
+    [labels.complaintAt, fmtDate(ticket.complaintAt)],
     [labels.sla, ticket.slaRemainingText || "--"],
     [labels.slaStatus, ticket.slaComputedStatusLabel || ticket.slaComputedStatus || "pending"],
   ];
 }
 
+function buildResolutionSummary(ticket, copy) {
+  const rows = [
+    [copy.resolutionActionTypeLabel, ticket.resolutionActionType],
+    [copy.resolutionContactStatusLabel, ticket.customerContactStatus],
+    [copy.resolutionSatisfiedLabel, ticket.customerSatisfied],
+    [copy.resolutionDateLabel, ticket.resolutionDate ? fmtDate(ticket.resolutionDate) : ""],
+    [copy.resolutionHandledByLabel, ticket.resolutionHandledBy],
+  ].filter(([, value]) => value);
+
+  return rows.map(([label, value]) => `${label}: ${value}`).join("\n");
+}
+
 export function buildTimeline(ticket, copy) {
   if (!ticket) return [];
-  const rows = [{ t: copy.createdTimeline, d: copy.loadedFromDb, m: fmtDate(ticket.createdAt) }];
+  const rows = [{ t: copy.createdTimeline, d: `${copy.loadedFromDb}\n${copy.complaintDateTimeLabel}: ${fmtDate(ticket.complaintAt)}`, m: `${copy.timelineTimestampLabel}: ${fmtDate(ticket.createdAt)}` }];
   const replies = ticket.rawReplies || [];
+  let hasResolutionEntry = false;
   replies.forEach((reply) => {
-    rows.push({ t: copy.replyByBranchTimeline, d: reply.reply_text || "--", m: fmtDate(reply.created_at) });
-    if (reply.action_taken) rows.push({ t: copy.actionTakenTimeline, d: reply.action_taken, m: fmtDate(reply.created_at) });
+    const timestamp = `${copy.timelineTimestampLabel}: ${fmtDate(reply.created_at)}`;
+
+    if (reply.reply_by === "Customer Resolution") {
+      hasResolutionEntry = true;
+      const details = [reply.action_taken, reply.reply_text].filter(Boolean).join("\n\n");
+      rows.push({ t: copy.customerResolutionTitle, d: details || copy.resolutionEmpty, m: timestamp });
+      return;
+    }
+
+    rows.push({ t: copy.replyByBranchTimeline, d: reply.reply_text || "--", m: timestamp });
+    if (reply.action_taken && reply.action_taken !== "Branch reply updated") rows.push({ t: copy.actionTakenTimeline, d: reply.action_taken, m: timestamp });
   });
+
+  if (ticket.resolutionUpdatedAt && !hasResolutionEntry) {
+    rows.push({
+      t: copy.customerResolutionTitle,
+      d: [buildResolutionSummary(ticket, copy), ticket.resolutionDetails].filter(Boolean).join("\n\n") || copy.resolutionEmpty,
+      m: `${copy.timelineTimestampLabel}: ${fmtDate(ticket.resolutionUpdatedAt)}`,
+    });
+  }
   return rows;
 }
 

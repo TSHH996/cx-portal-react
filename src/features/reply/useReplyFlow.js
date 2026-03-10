@@ -67,6 +67,8 @@ export function useReplyFlow(copy) {
       }
 
       setTicket(data.ticket || {});
+      setReplyText(data.ticket?.branch_reply || "");
+      setStatus(data.ticket?.status === "Closed" ? "Closed" : "Replied");
       setMsg(copy.replyReady, "success");
     } catch (error) {
       setMsg(`Fetch failed (network/CORS). ${error?.message || error}`, "error");

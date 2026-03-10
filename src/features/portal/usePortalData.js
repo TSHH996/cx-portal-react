@@ -16,6 +16,18 @@ async function fileToBase64(file) {
   });
 }
 
+function formatResolutionActivity(payload) {
+  const rows = [
+    ["Action Type", payload.resolution_action_type],
+    ["Customer Contact Status", payload.customer_contact_status],
+    ["Customer Satisfied", payload.customer_satisfied],
+    ["Resolution Date", payload.resolution_date ? String(payload.resolution_date).slice(0, 10) : ""],
+    ["Handled By", payload.resolution_handled_by],
+  ].filter(([, value]) => value);
+
+  return rows.map(([label, value]) => `${label}: ${value}`).join("\n");
+}
+
 async function fetchPortalState(language) {
   const [branchesRes, repliesRes, attachmentsRes, ticketsRes] = await Promise.all([
     supabase.from("branches").select("*").order("branch_name", { ascending: true }),
@@ -115,13 +127,60 @@ export function usePortalData(language) {
   const actions = useMemo(() => ({
     refresh: load,
     async saveReply(ticketId, replyText) {
+      const nowIso = new Date().toISOString();
+      const { data: currentTicket, error: currentTicketError } = await supabase
+        .from("tickets")
+        .select("first_reply_at")
+        .eq("id", ticketId)
+        .maybeSingle();
+
+      if (currentTicketError) throw currentTicketError;
+
       const { error } = await supabase.from("ticket_replies").insert([{
         ticket_id: ticketId,
         reply_text: replyText,
         reply_by: "Branch",
-        action_taken: "Reply saved",
+        action_taken: null,
       }]);
       if (error) throw error;
+
+      const updatePayload = {
+        branch_reply: replyText,
+        reply_by: "Branch",
+        reply_datetime: nowIso,
+      };
+
+      if (!currentTicket?.first_reply_at) updatePayload.first_reply_at = nowIso;
+
+      const { error: ticketError } = await supabase.from("tickets").update(updatePayload).eq("id", ticketId);
+      if (ticketError) throw ticketError;
+
+      await load();
+    },
+    async saveCustomerResolution(ticketId, payload) {
+      const nowIso = new Date().toISOString();
+      const updatePayload = {
+        resolution_action_type: payload.resolution_action_type || null,
+        customer_contact_status: payload.customer_contact_status || null,
+        customer_satisfied: payload.customer_satisfied || null,
+        resolution_date: payload.resolution_date || null,
+        resolution_handled_by: payload.resolution_handled_by || null,
+        resolution_details: payload.resolution_details || null,
+        resolution_updated_at: nowIso,
+      };
+
+      const { error: ticketError } = await supabase.from("tickets").update(updatePayload).eq("id", ticketId);
+      if (ticketError) throw ticketError;
+
+      const timelineDetails = [formatResolutionActivity(updatePayload), payload.resolution_details].filter(Boolean).join("\n\n");
+      const { error: logError } = await supabase.from("ticket_replies").insert([{
+        ticket_id: ticketId,
+        reply_text: timelineDetails || null,
+        reply_by: "Customer Resolution",
+        action_taken: formatResolutionActivity(updatePayload) || "Customer resolution updated",
+      }]);
+      if (logError) throw logError;
+
       await load();
     },
     async markReplied(ticketId) {
@@ -134,12 +193,8 @@ export function usePortalData(language) {
       let { data, error } = await supabase.from("tickets").insert([payload]).select("*");
 
       if (error && error.message && error.message.includes("schema cache")) {
-        const basePayload = { ...payload };
-        delete basePayload.brand;
-        delete basePayload.feedback_type;
-        delete basePayload.feedback_category;
-        delete basePayload.sub_category;
-        ({ data, error } = await supabase.from("tickets").insert([basePayload]).select("*"));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        ({ data, error } = await supabase.from("tickets").insert([payload]).select("*"));
       }
 
       if (error) throw error;
@@ -173,10 +228,58 @@ export function usePortalData(language) {
         }
       }
 
+      let emailError = "";
+
+      if (created?.id) {
+        const branch = state.branches.find((row) => row.branch_name === created.branch_name);
+        const { data: attachmentRows } = await supabase
+          .from("ticket_attachments")
+          .select("file_name, public_url")
+          .eq("ticket_uuid", created.id)
+          .order("created_at", { ascending: true });
+
+        if (branch?.branch_email) {
+          const complaintDisplay = payload.complaint_at
+            ? new Date(payload.complaint_at).toISOString().slice(0, 16).replace("T", " ")
+            : null;
+
+          const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-branch-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${supabaseAnonKey}`,
+            },
+            body: JSON.stringify({
+              ticket_id: created.id,
+              ticket_no: created.ticket_no,
+              branch_name: created.branch_name,
+              branch_email: branch.branch_email,
+              customer_name: created.customer_name,
+              customer_phone: created.customer_phone,
+              feedback_type: created.feedback_type,
+              feedback_category: created.feedback_category,
+              sub_category: created.sub_category,
+              description: created.description,
+              priority: created.priority,
+              status: created.status,
+              complaint_at: payload.complaint_at || null,
+              complaint_display: complaintDisplay,
+              attachment_links: (attachmentRows || []).filter((row) => row.public_url).map((row) => ({ name: row.file_name, url: row.public_url })),
+            }),
+          });
+
+          if (!emailRes.ok) {
+            const text = await emailRes.text();
+            emailError = text || "Branch email failed.";
+          }
+        }
+      }
+
       await load();
-      return created;
+      return { ...created, emailError };
     },
-  }), [load, updateTicketStatus]);
+  }), [load, state.branches, updateTicketStatus]);
 
   return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

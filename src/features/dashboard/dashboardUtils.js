@@ -93,6 +93,7 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
   const replies = repliesByTicketId[rowId] || [];
   const latestReply = replies.length ? replies[replies.length - 1] : null;
   const attachments = attachmentsByTicketId[rowId] || [];
+  const complaintAt = row.complaint_at ? new Date(row.complaint_at).getTime() : createdAt;
   const slaDueAt = row.sla_due_at ? new Date(row.sla_due_at).getTime() : null;
   const categoryValues = splitMultiValue(row.feedback_category || row.category);
   const subCategoryValues = splitMultiValue(row.sub_category);
@@ -146,11 +147,20 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
     customerName,
     customerPhone: row.customer_phone || "--",
     createdAt,
+    complaintAt,
     assignedTo: row.assign_to || row.assigned_to || "",
     description,
-    branchReply: latestReply?.reply_text || "",
-    replyBy: latestReply?.reply_by || "",
-    replyAt: latestReply?.created_at ? new Date(latestReply.created_at).getTime() : null,
+    branchReply: row.branch_reply || latestReply?.reply_text || "",
+    replyBy: row.reply_by || latestReply?.reply_by || "",
+    replyAt: row.reply_datetime ? new Date(row.reply_datetime).getTime() : latestReply?.created_at ? new Date(latestReply.created_at).getTime() : null,
+    firstReplyAt: row.first_reply_at ? new Date(row.first_reply_at).getTime() : null,
+    resolutionActionType: row.resolution_action_type || "",
+    customerContactStatus: row.customer_contact_status || "",
+    customerSatisfied: row.customer_satisfied || "",
+    resolutionDate: row.resolution_date ? new Date(row.resolution_date).getTime() : null,
+    resolutionHandledBy: row.resolution_handled_by || "",
+    resolutionDetails: row.resolution_details || "",
+    resolutionUpdatedAt: row.resolution_updated_at ? new Date(row.resolution_updated_at).getTime() : null,
     rawReplies: replies,
     attachments,
     slaDueAt,
