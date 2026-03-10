@@ -15,6 +15,42 @@ async function fileToBase64(file) {
   });
 }
 
+async function fetchPortalState(language) {
+  const [branchesRes, repliesRes, attachmentsRes, ticketsRes] = await Promise.all([
+    supabase.from("branches").select("*").order("branch_name", { ascending: true }),
+    supabase.from("ticket_replies").select("*").order("created_at", { ascending: true }),
+    supabase.from("ticket_attachments").select("*").order("created_at", { ascending: true }),
+    supabase.from("tickets").select("*").order("created_at", { ascending: false }),
+  ]);
+
+  const failing = [branchesRes, repliesRes, attachmentsRes, ticketsRes].find((result) => result.error);
+  if (failing?.error) throw failing.error;
+
+  const repliesByTicketId = {};
+  (repliesRes.data || []).forEach((reply) => {
+    const key = reply.ticket_id;
+    if (!repliesByTicketId[key]) repliesByTicketId[key] = [];
+    repliesByTicketId[key].push(reply);
+  });
+
+  const attachmentsByTicketId = {};
+  (attachmentsRes.data || []).forEach((attachment) => {
+    const key = attachment.ticket_uuid || null;
+    if (!key) return;
+    if (!attachmentsByTicketId[key]) attachmentsByTicketId[key] = [];
+    attachmentsByTicketId[key].push(attachment);
+  });
+
+  const tickets = (ticketsRes.data || []).map((ticket) => normalizeTicket(ticket, repliesByTicketId, attachmentsByTicketId, language));
+
+  return {
+    tickets,
+    branches: branchesRes.data || [],
+    repliesByTicketId,
+    attachmentsByTicketId,
+  };
+}
+
 export function usePortalData(language) {
   const [state, setState] = useState({
     tickets: [],
@@ -28,58 +64,44 @@ export function usePortalData(language) {
   const load = useCallback(async () => {
     if (!supabase) {
       setState((current) => ({ ...current, loading: false, error: "Supabase environment is not configured." }));
-      return;
+      return null;
     }
 
     setState((current) => ({ ...current, loading: true, error: "" }));
 
     try {
-      const [branchesRes, repliesRes, attachmentsRes, ticketsRes] = await Promise.all([
-        supabase.from("branches").select("*").order("branch_name", { ascending: true }),
-        supabase.from("ticket_replies").select("*").order("created_at", { ascending: true }),
-        supabase.from("ticket_attachments").select("*").order("created_at", { ascending: true }),
-        supabase.from("tickets").select("*").order("created_at", { ascending: false }),
-      ]);
-
-      const failing = [branchesRes, repliesRes, attachmentsRes, ticketsRes].find((result) => result.error);
-      if (failing?.error) throw failing.error;
-
-      const repliesByTicketId = {};
-      (repliesRes.data || []).forEach((reply) => {
-        const key = reply.ticket_id;
-        if (!repliesByTicketId[key]) repliesByTicketId[key] = [];
-        repliesByTicketId[key].push(reply);
-      });
-
-      const attachmentsByTicketId = {};
-      (attachmentsRes.data || []).forEach((attachment) => {
-        const key = attachment.ticket_uuid || null;
-        if (!key) return;
-        if (!attachmentsByTicketId[key]) attachmentsByTicketId[key] = [];
-        attachmentsByTicketId[key].push(attachment);
-      });
-
-      const tickets = (ticketsRes.data || []).map((ticket) => normalizeTicket(ticket, repliesByTicketId, attachmentsByTicketId, language));
+      const nextState = await fetchPortalState(language);
 
       setState({
-        tickets,
-        branches: branchesRes.data || [],
-        repliesByTicketId,
-        attachmentsByTicketId,
+        ...nextState,
         loading: false,
         error: "",
       });
+      return nextState;
     } catch (error) {
+      const message = error?.message || "Could not load portal data.";
       setState((current) => ({
         ...current,
         loading: false,
-        error: error?.message || "Could not load portal data.",
+        error: message,
       }));
+      throw error instanceof Error ? error : new Error(message);
     }
   }, [language]);
 
   useEffect(() => {
-    load();
+    load().catch(() => {});
+  }, [load]);
+
+  const updateTicketStatus = useCallback(async (ticketId, status) => {
+    const { error } = await supabase.from("tickets").update({ status }).eq("id", ticketId);
+    if (error) throw error;
+
+    const refreshedState = await load();
+    const refreshedTicket = refreshedState?.tickets.find((ticket) => ticket.rowId === ticketId) || null;
+    if (!refreshedTicket || refreshedTicket.status === status) return;
+
+    throw new Error("Ticket status update was blocked by Supabase row-level security. Add an UPDATE policy for authenticated users on public.tickets.");
   }, [load]);
 
   const actions = useMemo(() => ({
@@ -95,16 +117,10 @@ export function usePortalData(language) {
       await load();
     },
     async markReplied(ticketId) {
-      const { data, error } = await supabase.from("tickets").update({ status: "Replied" }).eq("id", ticketId).select("id");
-      if (error) throw error;
-      if (!data || data.length === 0) throw new Error("Ticket not found or update was blocked by server policy.");
-      await load();
+      await updateTicketStatus(ticketId, "Replied");
     },
     async closeTicket(ticketId) {
-      const { data, error } = await supabase.from("tickets").update({ status: "Closed" }).eq("id", ticketId).select("id");
-      if (error) throw error;
-      if (!data || data.length === 0) throw new Error("Ticket not found or update was blocked by server policy.");
-      await load();
+      await updateTicketStatus(ticketId, "Closed");
     },
     async createTicket(payload, files = []) {
       let { data, error } = await supabase.from("tickets").insert([payload]).select("*");
@@ -152,7 +168,7 @@ export function usePortalData(language) {
       await load();
       return created;
     },
-  }), [load]);
+  }), [load, updateTicketStatus]);
 
   return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

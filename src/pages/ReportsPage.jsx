@@ -115,7 +115,7 @@ function ReportsPage() {
     }
 
     if (tab === "source") {
-      return <div className="rptSection"><div className="rptSectionTitle">{copy.rptTabSource}</div><ReportCard title="Complaint Volume by Source" meta={`${source.total} total`}><ReportBreakdownRows entries={source.sources} total={source.total} /></ReportCard><div className="rptSectionTitle">Category Breakdown by Top Sources</div><div className="rptGrid3">{source.topCards.length ? source.topCards.map((card) => <ReportCard key={card.source} title={card.source} meta={`${card.count} tickets · ${card.pct}%`}><ReportBreakdownRows entries={card.categories} total={card.count} colorClass="bar-good" /></ReportCard>) : <div className="rptEmpty">No source data yet</div>}</div></div>;
+      return <div className="rptSection"><div className="rptSectionTitle">{copy.rptTabSource}</div><ReportCard title="Complaint Volume by Source" meta={`${source.total} total`}><ReportBreakdownRows entries={source.sources} total={source.total} /></ReportCard><div className="rptSectionTitle">Category Breakdown by Top Sources</div><div className="rptGrid3">{source.topCards.length ? source.topCards.map((card) => <ReportCard key={card.source} title={card.source} meta={`${card.count} tickets · ${card.pct}%`}><ReportBreakdownRows entries={card.categories} total={card.categoryTotal} colorClass="bar-good" /></ReportCard>) : <div className="rptEmpty">No source data yet</div>}</div></div>;
     }
 
     if (tab === "category") {

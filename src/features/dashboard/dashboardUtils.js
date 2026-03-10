@@ -1,3 +1,5 @@
+import { buildMultiValueBreakdown, formatMultiValue, hasMultiValue, splitMultiValue } from "../../lib/multiValue";
+
 export function pad(value) {
   return String(value).padStart(2, "0");
 }
@@ -48,6 +50,8 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
   const latestReply = replies.length ? replies[replies.length - 1] : null;
   const attachments = attachmentsByTicketId[rowId] || [];
   const slaDueAt = row.sla_due_at ? new Date(row.sla_due_at).getTime() : null;
+  const categoryValues = splitMultiValue(row.feedback_category || row.category);
+  const subCategoryValues = splitMultiValue(row.sub_category);
   const now = Date.now();
 
   let slaComputedStatus = row.sla_status || "pending";
@@ -73,8 +77,10 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
     priority: row.priority || "Medium",
     branch: row.branch_name || "--",
     brand: row.brand || "--",
-    category: row.feedback_category || row.category || "--",
-    subCategory: row.sub_category || "--",
+    category: formatMultiValue(categoryValues),
+    categoryValues,
+    subCategory: formatMultiValue(subCategoryValues),
+    subCategoryValues,
     source: row.feedback_type || row.source || "--",
     customerName: row.customer_name || "--",
     customerPhone: row.customer_phone || "--",
@@ -241,7 +247,7 @@ export function getDashboardCollections(filteredTickets) {
     brand: countBy(filteredTickets, (ticket) => ticket.brand),
     city: countBy(filteredTickets, (ticket) => getTicketCity(ticket)),
     feedbackType: countBy(filteredTickets, (ticket) => ticket.raw?.feedback_type || ticket.source),
-    categories: countBy(filteredTickets, (ticket) => ticket.category),
+    categories: buildMultiValueBreakdown(filteredTickets, (ticket) => ticket.categoryValues).rows,
     branches: countBy(filteredTickets, (ticket) => ticket.branch),
   };
 }
@@ -323,7 +329,7 @@ export function buildCustomerLookup(tickets, phone, copy, language) {
   const matches = getPhoneMatches(tickets, phone);
   if (!matches.length) return null;
   const latest = matches[0];
-  const categoryCounts = countBy(matches, (ticket) => ticket.category, 5);
+  const categoryCounts = buildMultiValueBreakdown(matches, (ticket) => ticket.categoryValues, 5).rows;
   const repeated = matches.length > 1;
   return {
     mode: "lookup",
@@ -360,7 +366,7 @@ export function buildCustomerLookup(tickets, phone, copy, language) {
 
 export function buildInsightResult(key, tickets, repliesByTicketId, copy, language) {
   const makeMostComplaints = (category = "") => {
-    const relevant = tickets.filter((ticket) => !category || ticket.category === category);
+    const relevant = tickets.filter((ticket) => !category || hasMultiValue(ticket.categoryValues, category));
     const top = countBy(relevant, (ticket) => ticket.branch, 5);
     const leader = top[0];
     return {
@@ -385,7 +391,7 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
   if (key === "mostComplaints") return makeMostComplaints();
   if (key === "foodQuality") return makeMostComplaints("Food Quality");
   if (key === "topCategories") {
-    const top = countBy(tickets, (ticket) => ticket.category, 5);
+    const top = buildMultiValueBreakdown(tickets, (ticket) => ticket.categoryValues, 5).rows;
     return {
       mode: "preset",
       activeKey: key,
@@ -496,7 +502,7 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
   const open = tickets.filter((ticket) => ticket.status !== "Closed");
   const overdue = open.filter((ticket) => ticket.slaComputedStatus === "breached" || (ticket.slaDueAt && ticket.slaDueAt < Date.now()));
   const high = open.filter((ticket) => ticket.priority === "High");
-  const topCategory = countBy(open, (ticket) => ticket.category, 3);
+  const topCategory = buildMultiValueBreakdown(open, (ticket) => ticket.categoryValues, 3).rows;
   const topBranch = countBy(open, (ticket) => ticket.branch, 3);
   const topSource = countBy(open, (ticket) => ticket.source, 3);
 

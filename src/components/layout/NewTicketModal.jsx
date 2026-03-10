@@ -4,6 +4,7 @@ import { useAppShell } from "../../contexts/AppShellContext";
 import { useToast } from "../../contexts/ToastContext";
 import { BRANDS, computeSlaDueAt, FEEDBACK_CATEGORIES, FEEDBACK_TYPES, PRIORITIES, STATUSES, SUB_CATEGORIES } from "../../features/portal/newTicketConfig";
 import { usePortalData } from "../../features/portal/usePortalData";
+import { joinMultiValue } from "../../lib/multiValue";
 
 function initialForm(copy) {
   return {
@@ -14,11 +15,60 @@ function initialForm(copy) {
     priority: "Medium",
     status: "Open",
     feedback_type: "WhatsApp",
-    feedback_category: [],   // now an array
-    sub_category: [],         // now an array
+    feedback_category: [],
+    sub_category: [],
     description: copy.descriptionDefault || "test",
     files: [],
   };
+}
+
+function toggleEntry(entries, value) {
+  return entries.includes(value)
+    ? entries.filter((entry) => entry !== value)
+    : [...entries, value];
+}
+
+function MultiChoiceField({ label, helper, values, options, emptyText, onToggle, disabled = false }) {
+  const helperText = disabled && !options.length
+    ? emptyText
+    : values.length
+      ? helper.replace("{values}", values.join(" · "))
+      : helper.replace("{values}", emptyText);
+
+  return (
+    <div className="fieldReact">
+      <label>{label}</label>
+      <div className={`multiPickField${disabled ? " is-disabled" : ""}`}>
+        {options.length ? (
+          <div className="multiPickGrid">
+            {options.map((value) => {
+              const active = values.includes(value);
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  className={`multiPickChip${active ? " active" : ""}`}
+                  onClick={() => onToggle(value)}
+                  aria-pressed={active}
+                  disabled={disabled}
+                >
+                  {value}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="multiPickEmpty">{emptyText}</div>
+        )}
+        <div className="panel-note">{helperText}</div>
+        {values.length ? (
+          <div className="multiPickSelection">
+            {values.map((value) => <span key={value} className="soft-badge">{value}</span>)}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 function NewTicketModal() {
@@ -29,7 +79,6 @@ function NewTicketModal() {
   const [form, setForm] = useState(initialForm(copy));
   const [busy, setBusy] = useState(false);
 
-  // Collect sub-category options from ALL selected feedback categories
   const subCategoryOptions = useMemo(() => {
     const opts = new Set();
     (form.feedback_category || []).forEach((cat) => {
@@ -40,21 +89,21 @@ function NewTicketModal() {
 
   if (!isNewTicketOpen) return null;
 
-  function handleCategoryChange(e) {
-    const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
-    // Drop sub-categories that no longer belong to any selected category
-    const validSubs = new Set();
-    selected.forEach((cat) => (SUB_CATEGORIES[cat] || []).forEach((s) => validSubs.add(s)));
-    setForm((current) => ({
-      ...current,
-      feedback_category: selected,
-      sub_category: current.sub_category.filter((s) => validSubs.has(s)),
-    }));
+  function handleCategoryToggle(value) {
+    setForm((current) => {
+      const nextCategories = toggleEntry(current.feedback_category, value);
+      const validSubs = new Set();
+      nextCategories.forEach((category) => (SUB_CATEGORIES[category] || []).forEach((entry) => validSubs.add(entry)));
+      return {
+        ...current,
+        feedback_category: nextCategories,
+        sub_category: current.sub_category.filter((entry) => validSubs.has(entry)),
+      };
+    });
   }
 
-  function handleSubCategoryChange(e) {
-    const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
-    setForm((current) => ({ ...current, sub_category: selected }));
+  function handleSubCategoryToggle(value) {
+    setForm((current) => ({ ...current, sub_category: toggleEntry(current.sub_category, value) }));
   }
 
   async function handleSubmit() {
@@ -71,9 +120,8 @@ function NewTicketModal() {
         branch_name: form.branch_name.trim(),
         brand: form.brand.trim(),
         feedback_type: form.feedback_type.trim(),
-        // Join multi-select arrays with " | " separator
-        feedback_category: form.feedback_category.join(" | "),
-        sub_category: form.sub_category.join(" | "),
+        feedback_category: joinMultiValue(form.feedback_category) || null,
+        sub_category: joinMultiValue(form.sub_category) || null,
         description: form.description.trim() || copy.descriptionDefault || "test",
         priority: form.priority,
         status: form.status,
@@ -120,37 +168,26 @@ function NewTicketModal() {
             <div className="fieldReact"><label>{copy.labelStatus || "Status"}</label><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value }))}>{STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
           </div>
 
-          <div className="fieldReact full"><label>{copy.labelFeedbackType || "Feedback Type"}</label><select value={form.feedback_type} onChange={(e) => setForm((current) => ({ ...current, feedback_type: e.target.value }))}>{FEEDBACK_TYPES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
+          <div className="fieldReact full"><label>{copy.labelFeedbackType || "Feedback Source"}</label><select value={form.feedback_type} onChange={(e) => setForm((current) => ({ ...current, feedback_type: e.target.value }))}>{FEEDBACK_TYPES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
 
           <div className="grid2React">
-            <div className="fieldReact">
-              <label>{copy.labelFeedbackCategory || "Feedback Category"} <span style={{ fontWeight: 400, fontSize: ".75em", color: "var(--muted)", textTransform: "none", letterSpacing: 0 }}>(hold Ctrl/⌘ for multiple)</span></label>
-              <select
-                multiple
-                value={form.feedback_category}
-                onChange={handleCategoryChange}
-              >
-                {FEEDBACK_CATEGORIES.map((value) => <option key={value} value={value}>{value}</option>)}
-              </select>
-              {form.feedback_category.length > 0 && (
-                <div className="panel-note" style={{ marginTop: 4 }}>{form.feedback_category.join(" · ")}</div>
-              )}
-            </div>
-            <div className="fieldReact">
-              <label>{copy.labelSubCategory || "Sub Category"} <span style={{ fontWeight: 400, fontSize: ".75em", color: "var(--muted)", textTransform: "none", letterSpacing: 0 }}>(hold Ctrl/⌘ for multiple)</span></label>
-              <select
-                multiple
-                value={form.sub_category}
-                onChange={handleSubCategoryChange}
-                disabled={subCategoryOptions.length === 0}
-              >
-                {subCategoryOptions.map((value) => <option key={value} value={value}>{value}</option>)}
-              </select>
-              {form.sub_category.length > 0 && (
-                <div className="panel-note" style={{ marginTop: 4 }}>{form.sub_category.join(" · ")}</div>
-              )}
-              {subCategoryOptions.length === 0 && <div className="panel-note" style={{ marginTop: 4 }}>Select a category first.</div>}
-            </div>
+            <MultiChoiceField
+              label={copy.labelFeedbackCategory || "Feedback Category"}
+              helper={copy.multiSelectHelper || "Select one or more options. Current selection: {values}"}
+              values={form.feedback_category}
+              options={FEEDBACK_CATEGORIES}
+              emptyText={copy.multiSelectEmpty || "No selection yet."}
+              onToggle={handleCategoryToggle}
+            />
+            <MultiChoiceField
+              label={copy.labelSubCategory || "Sub Category"}
+              helper={copy.multiSelectHelper || "Select one or more options. Current selection: {values}"}
+              values={form.sub_category}
+              options={subCategoryOptions}
+              emptyText={copy.subCategorySelectFirst || "Select at least one feedback category first."}
+              onToggle={handleSubCategoryToggle}
+              disabled={subCategoryOptions.length === 0}
+            />
           </div>
 
           <div className="fieldReact full"><label>{copy.labelDescription || "Description"}</label><textarea value={form.description} onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))} /></div>

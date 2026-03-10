@@ -1,4 +1,5 @@
 import { fmtDate, pad } from "../dashboard/dashboardUtils";
+import { buildMultiValueBreakdown, formatMultiValue, getUniqueMultiValues, hasMultiValue } from "../../lib/multiValue";
 
 export const REPORT_TABS = ["executive", "period", "sla", "branch", "brand", "source", "category", "aging", "trend", "export"];
 
@@ -12,7 +13,7 @@ export function getReportTickets(tickets, filters) {
     if (filters.source !== "all" && ticket.source !== filters.source) return false;
     if (filters.priority !== "all" && ticket.priority !== filters.priority) return false;
     if (filters.slaStatus !== "all" && ticket.slaComputedStatus !== filters.slaStatus) return false;
-    if (filters.category !== "all" && ticket.category !== filters.category) return false;
+    if (filters.category !== "all" && !hasMultiValue(ticket.categoryValues, filters.category)) return false;
     if (filters.dateFrom && ticket.createdAt < new Date(filters.dateFrom).getTime()) return false;
     if (filters.dateTo && ticket.createdAt > new Date(filters.dateTo).getTime() + 86400000) return false;
     return true;
@@ -26,6 +27,19 @@ export function rptCountBy(tickets, keyFn) {
     if (key && key !== "--") counts[key] = (counts[key] || 0) + 1;
   });
   return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+}
+
+function rptCountByMulti(tickets, keyFn, limit = Infinity) {
+  const { rows } = buildMultiValueBreakdown(tickets, keyFn, limit);
+  return rows.map(({ label, count }) => [label, count]);
+}
+
+function rptMultiBreakdown(tickets, keyFn, limit = Infinity) {
+  const { total, rows } = buildMultiValueBreakdown(tickets, keyFn, limit);
+  return {
+    total,
+    rows: rows.map(({ label, count }) => [label, count]),
+  };
 }
 
 function topKey(tickets, keyFn) {
@@ -47,8 +61,8 @@ export function rptTicketToRow(ticket) {
     Priority: ticket.priority ?? "",
     Branch: ticket.branch ?? "",
     Brand: ticket.brand ?? "",
-    Category: ticket.category ?? "",
-    "Sub Category": ticket.subCategory ?? "",
+    Category: formatMultiValue(ticket.categoryValues || ticket.category, ""),
+    "Sub Category": formatMultiValue(ticket.subCategoryValues || ticket.subCategory, ""),
     Source: ticket.source ?? "",
     Customer: ticket.customerName ?? "",
     Phone: ticket.customerPhone ?? "",
@@ -80,7 +94,7 @@ export function getReportOptions(tickets, branches) {
     brands: [...new Set((tickets || []).map((ticket) => ticket.brand).filter(Boolean).filter((value) => value !== "--"))].sort(),
     branches: (branches || []).map((branch) => branch.branch_name).filter(Boolean),
     sources: [...new Set((tickets || []).map((ticket) => ticket.source).filter(Boolean).filter((value) => value !== "--"))].sort(),
-    categories: [...new Set((tickets || []).map((ticket) => ticket.category).filter(Boolean).filter((value) => value !== "--"))].sort(),
+    categories: getUniqueMultiValues(tickets || [], (ticket) => ticket.categoryValues),
   };
 }
 
@@ -95,6 +109,7 @@ export function buildExecutiveSection(tickets) {
   const atRisk = tickets.filter((ticket) => ticket.slaComputedStatus === "at_risk").length;
   const slaOk = tickets.filter((ticket) => ["pending", "on_track"].includes(ticket.slaComputedStatus)).length;
   const slaCompliance = total > 0 ? Math.round((slaOk / total) * 100) : 0;
+  const topCategories = rptCountByMulti(tickets, (ticket) => ticket.categoryValues, 1);
 
   return {
     total,
@@ -108,7 +123,7 @@ export function buildExecutiveSection(tickets) {
     metricsSecondary: [
       { label: "Near SLA Breach", value: atRisk, sub: "At-risk tickets", tone: atRisk > 0 ? "warn" : "good" },
       { label: "SLA Breached", value: breached, sub: "Exceeded SLA deadline", tone: breached > 0 ? "bad" : "good" },
-      { label: "Top Category", value: topKey(tickets, (ticket) => ticket.category && ticket.category !== "--" ? ticket.category : null), sub: "Highest complaint volume" },
+      { label: "Top Category", value: topCategories[0] ? `${topCategories[0][0]} (${topCategories[0][1]})` : "--", sub: "Highest complaint volume" },
       { label: "Top Branch", value: topKey(tickets, (ticket) => ticket.branch && ticket.branch !== "--" ? ticket.branch : null), sub: "Most affected branch" },
       { label: "Top Source", value: topKey(tickets, (ticket) => ticket.source && ticket.source !== "--" ? ticket.source : null), sub: "Highest inbound channel" },
     ],
@@ -132,8 +147,8 @@ export function buildPeriodSection(allTickets) {
   return {
     weekRows: statRows(thisWeek, lastWeek),
     monthRows: statRows(thisMonth, lastMonth),
-    thisWeekCategories: rptCountBy(thisWeek, (ticket) => ticket.category && ticket.category !== "--" ? ticket.category : null).slice(0, 6),
-    lastWeekCategories: rptCountBy(lastWeek, (ticket) => ticket.category && ticket.category !== "--" ? ticket.category : null).slice(0, 6),
+    thisWeekCategories: rptCountByMulti(thisWeek, (ticket) => ticket.categoryValues, 6),
+    lastWeekCategories: rptCountByMulti(lastWeek, (ticket) => ticket.categoryValues, 6),
     thisWeekCount: thisWeek.length,
     lastWeekCount: lastWeek.length,
   };
@@ -188,7 +203,9 @@ export function buildBranchSection(tickets) {
     if (ticket.status === "In Progress") row.inProgress += 1;
     if (ticket.status === "Closed") row.closed += 1;
     if (ticket.slaComputedStatus === "breached") row.breached += 1;
-    if (ticket.category && ticket.category !== "--") row.categories[ticket.category] = (row.categories[ticket.category] || 0) + 1;
+    (ticket.categoryValues || []).forEach((category) => {
+      row.categories[category] = (row.categories[category] || 0) + 1;
+    });
   });
   return {
     breakdown: rptCountBy(tickets, (ticket) => ticket.branch && ticket.branch !== "--" ? ticket.branch : null).slice(0, 10),
@@ -207,7 +224,9 @@ export function buildBrandSection(tickets) {
     if (ticket.status === "Open" || ticket.status === "In Progress") row.open += 1;
     if (ticket.status === "Closed") row.closed += 1;
     if (ticket.slaComputedStatus === "breached") row.breached += 1;
-    if (ticket.category && ticket.category !== "--") row.categories[ticket.category] = (row.categories[ticket.category] || 0) + 1;
+    (ticket.categoryValues || []).forEach((category) => {
+      row.categories[category] = (row.categories[category] || 0) + 1;
+    });
   });
   return {
     breakdown: rptCountBy(tickets, (ticket) => ticket.brand && ticket.brand !== "--" ? ticket.brand : null),
@@ -222,19 +241,28 @@ export function buildSourceSection(tickets) {
     sources,
     topCards: sources.slice(0, 3).map(([source, count]) => {
       const rows = tickets.filter((ticket) => ticket.source === source);
-      return { source, count, pct: tickets.length > 0 ? ((count / tickets.length) * 100).toFixed(1) : 0, categories: rptCountBy(rows, (ticket) => ticket.category && ticket.category !== "--" ? ticket.category : null).slice(0, 5) };
+      const categoryBreakdown = rptMultiBreakdown(rows, (ticket) => ticket.categoryValues, 5);
+      return {
+        source,
+        count,
+        pct: tickets.length > 0 ? ((count / tickets.length) * 100).toFixed(1) : 0,
+        categoryTotal: categoryBreakdown.total || count,
+        categories: categoryBreakdown.rows,
+      };
     }),
   };
 }
 
 export function buildCategorySection(tickets) {
-  const mainCategories = rptCountBy(tickets, (ticket) => ticket.category && ticket.category !== "--" ? ticket.category : null);
+  const mainBreakdown = rptMultiBreakdown(tickets, (ticket) => ticket.categoryValues);
+  const subBreakdown = rptMultiBreakdown(tickets, (ticket) => ticket.subCategoryValues, 10);
+  const mainCategories = mainBreakdown.rows;
   return {
-    total: tickets.length,
+    total: mainBreakdown.total || tickets.length,
     mainCategories,
-    subCategories: rptCountBy(tickets, (ticket) => ticket.subCategory && ticket.subCategory !== "--" ? ticket.subCategory : null).slice(0, 10),
+    subCategories: subBreakdown.rows,
     priorityRows: mainCategories.slice(0, 5).map(([category, total]) => {
-      const rows = tickets.filter((ticket) => ticket.category === category);
+      const rows = tickets.filter((ticket) => hasMultiValue(ticket.categoryValues, category));
       return { category, total, high: rows.filter((ticket) => ticket.priority === "High").length, medium: rows.filter((ticket) => ticket.priority === "Medium").length, low: rows.filter((ticket) => ticket.priority === "Low").length };
     }),
   };
@@ -259,7 +287,7 @@ export function buildAgingSection(tickets) {
       return { ticket: ticket.id, branch: ticket.branch, priority: ticket.priority, age: days > 0 ? `${days}d ${hours % 24}h` : `${hours}h`, category: ticket.category && ticket.category !== "--" ? ticket.category : "--" };
     }),
     byBranch: rptCountBy(activeTickets, (ticket) => ticket.branch && ticket.branch !== "--" ? ticket.branch : null).slice(0, 8),
-    byCategory: rptCountBy(activeTickets, (ticket) => ticket.category && ticket.category !== "--" ? ticket.category : null).slice(0, 8),
+    byCategory: rptCountByMulti(activeTickets, (ticket) => ticket.categoryValues, 8),
   };
 }
 
@@ -287,8 +315,16 @@ export function buildTrendSection(tickets) {
   const lastWeekTickets = tickets.filter((ticket) => ticket.createdAt >= now - 14 * 86400000 && ticket.createdAt < now - 7 * 86400000);
   const current = {};
   const previous = {};
-  thisWeekTickets.forEach((ticket) => { if (ticket.category && ticket.category !== "--") current[ticket.category] = (current[ticket.category] || 0) + 1; });
-  lastWeekTickets.forEach((ticket) => { if (ticket.category && ticket.category !== "--") previous[ticket.category] = (previous[ticket.category] || 0) + 1; });
+  thisWeekTickets.forEach((ticket) => {
+    (ticket.categoryValues || []).forEach((category) => {
+      current[category] = (current[category] || 0) + 1;
+    });
+  });
+  lastWeekTickets.forEach((ticket) => {
+    (ticket.categoryValues || []).forEach((category) => {
+      previous[category] = (previous[category] || 0) + 1;
+    });
+  });
   return {
     days,
     bars: bars.map((entry) => ({ ...entry, height: Math.max(4, Math.round((entry.count / maxCount) * 100)) })),
@@ -313,7 +349,6 @@ export function buildExportBundles(allTickets, filteredTickets) {
   allTickets.forEach((ticket) => {
     const branch = ticket.branch && ticket.branch !== "--" ? ticket.branch : null;
     const brand = ticket.brand && ticket.brand !== "--" ? ticket.brand : null;
-    const category = ticket.category && ticket.category !== "--" ? ticket.category : null;
     if (branch) {
       if (!slaSummary[branch]) slaSummary[branch] = { Branch: branch, Total: 0, Breached: 0, AtRisk: 0, "SLA Compliance %": "100%" };
       if (!branchReport[branch]) branchReport[branch] = { Branch: branch, Total: 0, Open: 0, Closed: 0, Breached: 0 };
@@ -331,13 +366,13 @@ export function buildExportBundles(allTickets, filteredTickets) {
       if (ticket.status === "Closed") brandReport[brand].Closed += 1;
       if (ticket.slaComputedStatus === "breached") brandReport[brand].Breached += 1;
     }
-    if (category) {
+    (ticket.categoryValues || []).forEach((category) => {
       if (!categoryReport[category]) categoryReport[category] = { Category: category, Total: 0, High: 0, Medium: 0, Low: 0 };
       categoryReport[category].Total += 1;
       if (ticket.priority === "High") categoryReport[category].High += 1;
       if (ticket.priority === "Medium") categoryReport[category].Medium += 1;
       if (ticket.priority === "Low") categoryReport[category].Low += 1;
-    }
+    });
   });
   Object.values(slaSummary).forEach((row) => { row["SLA Compliance %"] = row.Total > 0 ? `${Math.round(((row.Total - row.Breached) / row.Total) * 100)}%` : "100%"; });
   return { all, open, breached, high, filtered, slaSummary: Object.values(slaSummary), branchReport: Object.values(branchReport), brandReport: Object.values(brandReport), categoryReport: Object.values(categoryReport) };

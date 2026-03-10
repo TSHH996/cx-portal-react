@@ -1,6 +1,29 @@
 import { useState } from "react";
 import { fmtDate } from "../../features/dashboard/dashboardUtils";
 import { buildTimeline, ticketInfoRows } from "../../features/tickets/ticketUtils";
+import { splitMultiValue } from "../../lib/multiValue";
+
+function renderInfoValue(value) {
+  if (Array.isArray(value)) {
+    if (value.length === 0) return "--";
+    if (value.length === 1) return value[0];
+    return (
+      <span className="kv-multi-badges">
+        {value.map((entry) => <span key={entry} className="soft-badge">{entry}</span>)}
+      </span>
+    );
+  }
+
+  const str = String(value ?? "");
+  const parts = splitMultiValue(str);
+  if (parts.length <= 1) return str || "--";
+
+  return (
+    <span className="kv-multi-badges">
+      {parts.map((part) => <span key={part} className="soft-badge">{part}</span>)}
+    </span>
+  );
+}
 
 function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, onAssign, onAddNote, busy }) {
   const [replyText, setReplyText] = useState(ticket?.branchReply || "");
@@ -41,20 +64,7 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
         <article className="panel-card">
           <div className="panel-heading">{copy.ticketInfoTitle}</div>
           <div className="ticket-kv-grid">
-            {infoRows.map(([label, value]) => {
-              const str = String(value ?? "");
-              const parts = str.includes(" | ") ? str.split(" | ") : null;
-              return (
-                <div key={label}>
-                  <b>{label}:</b>{" "}
-                  {parts ? (
-                    <span className="kv-multi-badges">
-                      {parts.map((part, i) => <span key={i} className="soft-badge">{part.trim()}</span>)}
-                    </span>
-                  ) : str}
-                </div>
-              );
-            })}
+            {infoRows.map(([label, value]) => <div key={label}><b>{label}:</b> {renderInfoValue(value)}</div>)}
           </div>
         </article>
 

@@ -218,8 +218,16 @@ body[data-theme="light"] .filter-block input, body[data-theme="light"] .filter-b
 .rptFilterBar { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 1rem; }
 .rptFilterGroup { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .rptFilterLabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+.rptDateField { position: relative; display: flex; align-items: center; min-width: min(100%, 176px); }
 .rptDateInput, .rptSelect { border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--text); padding: 8px 10px; border-radius: 10px; font-size: 12.5px; height: 36px; }
+.rptDateInput { width: 100%; min-width: 0; padding-inline-start: 12px; padding-inline-end: 40px; font-variant-numeric: tabular-nums; appearance: none; -webkit-appearance: none; color-scheme: dark; }
+.rptDateInput::-webkit-date-and-time-value { min-height: 1.2em; text-align: left; }
+.rptDateInput::-webkit-datetime-edit, .rptDateInput::-webkit-datetime-edit-fields-wrapper { padding: 0; color: inherit; }
+.rptDateInput::-webkit-calendar-picker-indicator { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.rptDateIcon { position: absolute; inset-inline-end: 12px; width: 16px; height: 16px; color: var(--muted); pointer-events: none; display: grid; place-items: center; }
+.rptDateIcon svg { width: 100%; height: 100%; }
 body[data-theme="light"] .rptDateInput, body[data-theme="light"] .rptSelect { background: #fff; color: #131d33; }
+body[data-theme="light"] .rptDateInput { color-scheme: light; }
 .rptNav { display: flex; gap: 4px; flex-wrap: wrap; padding: 5px; border-radius: 1rem; }
 .rptTab { border: 1px solid transparent; background: transparent; color: var(--muted); padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 .rptTab:hover { background: rgba(255,255,255,.05); color: var(--text); }
@@ -466,6 +474,46 @@ body[data-theme="light"] .replyCard select option {
 }
 .fieldReact textarea { min-height: 112px; resize: vertical; line-height: 1.7; }
 .fieldReact select[multiple] { appearance: auto; -webkit-appearance: auto; background-image: none; padding-inline-end: 12px; min-height: 110px; }
+.multiPickField {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.035);
+  border-radius: 15px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 42px;
+}
+.multiPickField.is-disabled { opacity: .8; }
+.multiPickGrid, .multiPickSelection { display: flex; flex-wrap: wrap; gap: 8px; }
+.multiPickChip {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.03);
+  color: var(--muted-strong);
+  border-radius: 999px;
+  padding: .58rem .78rem;
+  min-height: 38px;
+}
+.multiPickChip:hover:not(:disabled), .multiPickChip:focus-visible {
+  border-color: rgba(79,140,255,.34);
+  color: var(--text);
+  outline: none;
+}
+.multiPickChip.active {
+  background: linear-gradient(135deg, var(--accent-soft), rgba(16,185,129,.12));
+  border-color: rgba(79,140,255,.38);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(79,140,255,.12);
+}
+.multiPickChip:disabled { cursor: default; }
+.multiPickEmpty {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: .9rem;
+  color: var(--muted);
+  text-align: center;
+}
+body[data-theme="light"] .multiPickField { background: #f8fbff; }
 .kv-multi-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .kv-multi-badges .soft-badge { font-size: .7rem; padding: .2rem .55rem; }
 .modalActionsReact {
