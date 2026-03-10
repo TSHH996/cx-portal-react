@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseAnonKey, supabaseUrl } from "../../lib/supabase";
 import { normalizeTicket } from "../dashboard/dashboardUtils";
+import { resolveBranchCity } from "./newTicketConfig";
 
 async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -41,11 +42,18 @@ async function fetchPortalState(language) {
     attachmentsByTicketId[key].push(attachment);
   });
 
-  const tickets = (ticketsRes.data || []).map((ticket) => normalizeTicket(ticket, repliesByTicketId, attachmentsByTicketId, language));
+  const branches = (branchesRes.data || []).map((branch) => ({
+    ...branch,
+    city: resolveBranchCity(branch.branch_name, branch.city),
+  }));
+
+  const branchCityByName = Object.fromEntries(branches.map((branch) => [branch.branch_name, branch.city]));
+
+  const tickets = (ticketsRes.data || []).map((ticket) => normalizeTicket(ticket, repliesByTicketId, attachmentsByTicketId, language, branchCityByName));
 
   return {
     tickets,
-    branches: branchesRes.data || [],
+    branches,
     repliesByTicketId,
     attachmentsByTicketId,
   };

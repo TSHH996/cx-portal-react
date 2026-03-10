@@ -7,7 +7,7 @@ export function filterTickets(tickets, filters) {
   const branchQuery = (filters.branch || "").toLowerCase().trim();
 
   return tickets.filter((ticket) => {
-    const hay = `${ticket.id} ${ticket.subject || ""} ${ticket.branch} ${ticket.customerName} ${ticket.customerPhone} ${ticket.category} ${ticket.source} ${ticket.description}`.toLowerCase();
+    const hay = `${ticket.id} ${ticket.subject || ""} ${ticket.branch} ${ticket.city || ""} ${ticket.customerName} ${ticket.customerPhone} ${ticket.category} ${ticket.source} ${ticket.description}`.toLowerCase();
     if (query && !hay.includes(query)) return false;
     if (status !== "all" && ticket.status !== status) return false;
     if (priority !== "all" && ticket.priority !== priority) return false;
@@ -23,6 +23,7 @@ export function ticketInfoRows(ticket, labels) {
     [labels.status, ticket.status],
     [labels.priority, ticket.priority],
     [labels.branch, ticket.branch],
+    [labels.city, ticket.city || "--"],
     [labels.brand, ticket.brand],
     [labels.source, ticket.source],
     [labels.category, ticket.categoryValues?.length ? ticket.categoryValues : ticket.category],

@@ -11,11 +11,34 @@ export const SUB_CATEGORIES = {
   Pricing: ["Overcharged", "Wrong Price on Menu", "Hidden Fees"],
 };
 
+export const CITIES = ["Dammam", "Jeddah", "Jizan", "Khamis Mushayt", "Khobar", "Madinah", "Makkah", "Riyadh", "Taif", "Al Hassa"];
 export const BRANDS = ["Asian Hub", "Baytoti", "Indo Makan", "Maki House", "Podo Moro", "Rice&Roll", "Wok"];
 export const FEEDBACK_TYPES = ["Google Review", "Dine In Survey (0-6)", "App Survey (0-6)", "Call Center", "WhatsApp", "Meta Business", "Email"];
 export const FEEDBACK_CATEGORIES = Object.keys(SUB_CATEGORIES);
 export const PRIORITIES = ["High", "Medium", "Low"];
 export const STATUSES = ["Open", "In Progress", "Replied", "Closed"];
+
+const CITY_BY_LOWERCASE = Object.fromEntries(CITIES.map((city) => [city.toLowerCase(), city]));
+
+const BRANCH_CITY_OVERRIDES = {
+  "Al Marwa": "Jeddah",
+  "Khamis Mushayt": "Khamis Mushayt",
+  Mohammadiah: "Jeddah",
+  "Riyadh Park": "Riyadh",
+  Salamah: "Jeddah",
+  Sari: "Jeddah",
+};
+
+export function normalizeCity(value) {
+  const key = String(value || "").trim().toLowerCase();
+  return CITY_BY_LOWERCASE[key] || "";
+}
+
+export function resolveBranchCity(branchName, city = "") {
+  const direct = normalizeCity(city);
+  if (direct) return direct;
+  return BRANCH_CITY_OVERRIDES[branchName] || "";
+}
 
 export function computeSlaDueAt(priority) {
   const hours = priority === "High" ? 8 : priority === "Low" ? 48 : 24;

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppShell } from "../../contexts/AppShellContext";
 import { useToast } from "../../contexts/ToastContext";
-import { BRANDS, computeSlaDueAt, FEEDBACK_CATEGORIES, FEEDBACK_TYPES, PRIORITIES, STATUSES, SUB_CATEGORIES } from "../../features/portal/newTicketConfig";
+import { BRANDS, CITIES, computeSlaDueAt, FEEDBACK_CATEGORIES, FEEDBACK_TYPES, PRIORITIES, resolveBranchCity, STATUSES, SUB_CATEGORIES } from "../../features/portal/newTicketConfig";
 import { usePortalData } from "../../features/portal/usePortalData";
 import { joinMultiValue } from "../../lib/multiValue";
 
@@ -10,6 +10,7 @@ function initialForm(copy) {
   return {
     customer_name: copy.customerNameDefault || "Test Customer",
     customer_phone: copy.customerPhoneDefault || "0500000000",
+    city: "",
     branch_name: "",
     brand: "",
     priority: "Medium",
@@ -79,6 +80,16 @@ function NewTicketModal() {
   const [form, setForm] = useState(initialForm(copy));
   const [busy, setBusy] = useState(false);
 
+  const normalizedBranches = useMemo(
+    () => branches.map((branch) => ({ ...branch, city: resolveBranchCity(branch.branch_name, branch.city) })),
+    [branches]
+  );
+
+  const filteredBranches = useMemo(
+    () => (form.city ? normalizedBranches.filter((branch) => branch.city === form.city) : normalizedBranches),
+    [form.city, normalizedBranches]
+  );
+
   const subCategoryOptions = useMemo(() => {
     const opts = new Set();
     (form.feedback_category || []).forEach((cat) => {
@@ -104,6 +115,29 @@ function NewTicketModal() {
 
   function handleSubCategoryToggle(value) {
     setForm((current) => ({ ...current, sub_category: toggleEntry(current.sub_category, value) }));
+  }
+
+  function handleCityChange(city) {
+    setForm((current) => {
+      const selectedBranch = current.branch_name
+        ? normalizedBranches.find((branch) => branch.branch_name === current.branch_name)
+        : null;
+      const keepBranch = !city || (selectedBranch && selectedBranch.city === city);
+      return {
+        ...current,
+        city,
+        branch_name: keepBranch ? current.branch_name : "",
+      };
+    });
+  }
+
+  function handleBranchChange(branchName) {
+    const selectedBranch = normalizedBranches.find((branch) => branch.branch_name === branchName);
+    setForm((current) => ({
+      ...current,
+      branch_name: branchName,
+      city: selectedBranch?.city || current.city,
+    }));
   }
 
   async function handleSubmit() {
@@ -159,14 +193,16 @@ function NewTicketModal() {
           </div>
 
           <div className="grid2React">
-            <div className="fieldReact"><label>{copy.labelBranchName || "Branch Name"}</label><select value={form.branch_name} onChange={(e) => setForm((current) => ({ ...current, branch_name: e.target.value }))}><option value="">{copy.optionSelectBranch || "Select branch"}</option>{branches.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select></div>
-            <div className="fieldReact"><label>{copy.labelBrand || "Brand"}</label><select value={form.brand} onChange={(e) => setForm((current) => ({ ...current, brand: e.target.value }))}><option value="">Select brand</option>{BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></div>
+            <div className="fieldReact"><label>{copy.labelCity || "City"}</label><select value={form.city} onChange={(e) => handleCityChange(e.target.value)}><option value="">{copy.optionSelectCity || "Select city"}</option>{CITIES.map((city) => <option key={city} value={city}>{city}</option>)}</select></div>
+            <div className="fieldReact"><label>{copy.labelBranchName || "Branch Name"}</label><select value={form.branch_name} onChange={(e) => handleBranchChange(e.target.value)}><option value="">{copy.optionSelectBranch || "Select branch"}</option>{filteredBranches.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select>{form.city && filteredBranches.length === 0 ? <div className="panel-note" style={{ marginTop: 6 }}>{copy.noBranchesForCity || "No branches are available for the selected city yet."}</div> : null}</div>
           </div>
 
           <div className="grid2React">
+            <div className="fieldReact"><label>{copy.labelBrand || "Brand"}</label><select value={form.brand} onChange={(e) => setForm((current) => ({ ...current, brand: e.target.value }))}><option value="">Select brand</option>{BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></div>
             <div className="fieldReact"><label>{copy.labelPriority || "Priority"}</label><select value={form.priority} onChange={(e) => setForm((current) => ({ ...current, priority: e.target.value }))}>{PRIORITIES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
-            <div className="fieldReact"><label>{copy.labelStatus || "Status"}</label><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value }))}>{STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
           </div>
+
+          <div className="fieldReact full"><label>{copy.labelStatus || "Status"}</label><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value }))}>{STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
 
           <div className="fieldReact full"><label>{copy.labelFeedbackType || "Feedback Source"}</label><select value={form.feedback_type} onChange={(e) => setForm((current) => ({ ...current, feedback_type: e.target.value }))}>{FEEDBACK_TYPES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
 

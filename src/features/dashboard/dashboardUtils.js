@@ -17,7 +17,7 @@ export function digitsOnly(value) {
 
 export function getTicketCity(ticket) {
   const raw = ticket?.raw || {};
-  return raw.city || raw.branch_city || raw.city_name || raw.branch_city_name || "Unspecified";
+  return ticket?.city || raw.city || raw.branch_city || raw.city_name || raw.branch_city_name || "Unspecified";
 }
 
 export function countBy(items, keyGetter, limit = 6) {
@@ -37,7 +37,7 @@ export function countBy(items, keyGetter, limit = 6) {
     }));
 }
 
-export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, language) {
+export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, language, branchCityByName = {}) {
   const rowId = row.id || null;
   const createdAt = row.created_at ? new Date(row.created_at).getTime() : Date.now();
   const ticketIdLabel = row.ticket_no !== null && row.ticket_no !== undefined
@@ -52,6 +52,7 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
   const slaDueAt = row.sla_due_at ? new Date(row.sla_due_at).getTime() : null;
   const categoryValues = splitMultiValue(row.feedback_category || row.category);
   const subCategoryValues = splitMultiValue(row.sub_category);
+  const city = row.city || row.branch_city || row.city_name || row.branch_city_name || branchCityByName[row.branch_name] || "Unspecified";
   const now = Date.now();
 
   let slaComputedStatus = row.sla_status || "pending";
@@ -76,6 +77,7 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
     status: row.status || "Open",
     priority: row.priority || "Medium",
     branch: row.branch_name || "--",
+    city,
     brand: row.brand || "--",
     category: formatMultiValue(categoryValues),
     categoryValues,
