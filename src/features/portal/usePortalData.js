@@ -95,13 +95,15 @@ export function usePortalData(language) {
       await load();
     },
     async markReplied(ticketId) {
-      const { error } = await supabase.from("tickets").update({ status: "Replied" }).eq("id", ticketId);
+      const { data, error } = await supabase.from("tickets").update({ status: "Replied" }).eq("id", ticketId).select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Ticket not found or update was blocked by server policy.");
       await load();
     },
     async closeTicket(ticketId) {
-      const { error } = await supabase.from("tickets").update({ status: "Closed" }).eq("id", ticketId);
+      const { data, error } = await supabase.from("tickets").update({ status: "Closed" }).eq("id", ticketId).select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Ticket not found or update was blocked by server policy.");
       await load();
     },
     async createTicket(payload, files = []) {

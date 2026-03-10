@@ -4,6 +4,7 @@ function TicketsFiltersSidebar({ copy, filters, resultCount, onChange }) {
       <section className="panel-card">
         <div className="panel-heading">{copy.filtersTitle}</div>
         <div className="filter-stack">
+          <input value={filters.search} onChange={(e) => onChange("search", e.target.value)} placeholder={copy.searchPlaceholder} />
           <select value={filters.status} onChange={(e) => onChange("status", e.target.value)}>
             <option value="all">{copy.filterAllStatus}</option>
             <option value="Open">{copy.filterOpen}</option>

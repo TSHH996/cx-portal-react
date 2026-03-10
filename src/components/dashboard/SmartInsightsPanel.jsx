@@ -25,7 +25,6 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
   const [phone, setPhone] = useState("");
   const [activeRequest, setActiveRequest] = useState(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const brandOptions = useMemo(
     () => [...new Set(tickets.map((ticket) => ticket.brand).filter(Boolean).filter((value) => value !== "--"))].sort(),
@@ -53,16 +52,9 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
     return null;
   }, [activeRequest, copy, language, meta, repliesByTicketId, scopedTickets]);
 
-  const applyResult = (nextRequest) => {
-    setLoading(false);
-    setError("");
-    setActiveRequest(nextRequest);
-  };
-
   const handlePreset = (key) => {
-    setLoading(true);
     setError("");
-    Promise.resolve().then(() => applyResult({ mode: "preset", key }));
+    setActiveRequest({ mode: "preset", key });
   };
 
   const handleLookup = () => {
@@ -71,18 +63,14 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
       setActiveRequest(null);
       return;
     }
-    setLoading(true);
+    const nextResult = buildCustomerLookup(scopedTickets, phone, copy, language);
+    if (!nextResult) {
+      setError(copy.lookupNoResults);
+      setActiveRequest(null);
+      return;
+    }
     setError("");
-    Promise.resolve().then(() => {
-      const nextResult = buildCustomerLookup(scopedTickets, phone, copy, language);
-      if (!nextResult) {
-        setLoading(false);
-        setError(copy.lookupNoResults);
-        setActiveRequest(null);
-        return;
-      }
-      applyResult({ mode: "lookup", phone });
-    });
+    setActiveRequest({ mode: "lookup", phone });
   };
 
   const handleCopy = async () => {
@@ -145,9 +133,9 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
             <button type="button" className="ghost-btn" onClick={handleExport} disabled={!result?.exportRows?.length}>⬇ {copy.btnExportInsightTxt}</button>
           </div>
         </div>
-        <div className="panel-note">{loading ? copy.insightsLoading : error ? copy.insightsErrorTitle : result?.meta || copy.insightsReady}</div>
-        <div className={`insights-result-content${loading ? " loading" : error ? " error" : !result?.summary ? " empty" : ""}`}>
-          {loading ? copy.insightsLoading : error ? error : !result?.summary ? copy.insightsEmpty : (
+        <div className="panel-note">{error ? copy.insightsErrorTitle : result?.meta || copy.insightsReady}</div>
+        <div className={`insights-result-content${error ? " error" : !result?.summary ? " empty" : ""}`}>
+          {error ? error : !result?.summary ? copy.insightsEmpty : (
             <>
               {result.title ? <div className="insights-block-label">{result.title}</div> : null}
               <div className="insights-summary">{result.summary}</div>
