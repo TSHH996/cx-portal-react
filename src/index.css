@@ -63,7 +63,7 @@ button { cursor: pointer; }
   background: rgba(4, 10, 24, 0.82); border-inline-end: 1px solid var(--line); backdrop-filter: blur(14px);
 }
 body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82); }
-.sidebar-top, .sidebar-footer, .hero-card, .surface-card, .topbar-shell, .stat-card { border: 1px solid var(--line); box-shadow: var(--shadow); }
+.sidebar-top, .hero-card, .surface-card, .topbar-shell, .stat-card { border: 1px solid var(--line); box-shadow: var(--shadow); }
 .brand-row, .team-card, .nav-left, .topbar-actions, .status-row, .badge-row, .toggle-row { display: flex; align-items: center; gap: .75rem; }
 .brand-row, .team-card { padding: .9rem; border-radius: 1rem; background: var(--panel); }
 .logo-mark, .team-avatar, .stat-icon-badge {
@@ -92,7 +92,7 @@ body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82);
 .soft-badge.warn, .ghost-btn.warn { border-color: rgba(245,158,11,.35); color: #fbbf24; }
 .soft-badge.bad { border-color: rgba(239,68,68,.35); color: #fca5a5; }
 .status-badge.good { color: #dcfce7; background: rgba(34,197,94,.18); }
-.sidebar-footer { margin-top: auto; display: flex; flex-direction: column; gap: .72rem; }
+.sidebar-footer { display: flex; flex-direction: column; gap: .72rem; border-top: 1px solid var(--line); padding-top: .85rem; margin-top: .25rem; }
 .badge-row, .toggle-row, .topbar-actions { flex-wrap: wrap; }
 .ghost-btn, .primary-btn {
   border-radius: .85rem; border: 1px solid var(--line); padding: .72rem .92rem; background: var(--panel); color: var(--text);
@@ -150,7 +150,7 @@ body[data-theme="light"] .filter-block input, body[data-theme="light"] .filter-b
 .analytics-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .two-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dashboard-main-col > .surface-card:first-child { min-height: 312px; }
-.dashboard-side-col { position: sticky; top: 1rem; align-self: start; }
+.dashboard-side-col { position: sticky; top: 1rem; align-self: start; max-height: calc(100vh - 2rem); overflow-y: auto; scrollbar-width: thin; }
 
 .tickets-page-grid { display: grid; grid-template-columns: 246px minmax(320px, 364px) minmax(0, 1fr); gap: 10px; margin-top: 12px; min-width: 0; align-items: start; }
 .ticket-sidebar-column { display: flex; flex-direction: column; gap: 12px; }
@@ -465,6 +465,9 @@ body[data-theme="light"] .replyCard select option {
   color: #0f172a;
 }
 .fieldReact textarea { min-height: 112px; resize: vertical; line-height: 1.7; }
+.fieldReact select[multiple] { appearance: auto; -webkit-appearance: auto; background-image: none; padding-inline-end: 12px; min-height: 110px; }
+.kv-multi-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.kv-multi-badges .soft-badge { font-size: .7rem; padding: .2rem .55rem; }
 .modalActionsReact {
   display: flex;
   justify-content: flex-end;
@@ -514,6 +517,7 @@ body[data-theme="light"] .replyCard select option {
   border-radius: 14px; padding: 10px 11px; text-align: start; min-height: 86px;
 }
 .insight-chip.active { border-color: rgba(124,58,237,.34); background: linear-gradient(135deg, rgba(124,58,237,.16), rgba(56,189,248,.1)); }
+.insight-chip:hover:not(.active) { border-color: rgba(124,58,237,.28); background: linear-gradient(135deg, rgba(124,58,237,.12), rgba(56,189,248,.07)); }
 .insight-chip-title { font-weight: 800; font-size: 12.5px; }
 .insight-chip-sub { margin-top: 4px; font-size: 11px; color: var(--muted); }
 .insights-result-content { margin-top: 8px; border-radius: 14px; border: 1px solid rgba(255,255,255,.05); background: rgba(255,255,255,.02); padding: 12px 13px; min-height: 132px; }

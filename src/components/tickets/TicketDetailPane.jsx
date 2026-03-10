@@ -41,7 +41,20 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
         <article className="panel-card">
           <div className="panel-heading">{copy.ticketInfoTitle}</div>
           <div className="ticket-kv-grid">
-            {infoRows.map(([label, value]) => <div key={label}><b>{label}:</b> {value}</div>)}
+            {infoRows.map(([label, value]) => {
+              const str = String(value ?? "");
+              const parts = str.includes(" | ") ? str.split(" | ") : null;
+              return (
+                <div key={label}>
+                  <b>{label}:</b>{" "}
+                  {parts ? (
+                    <span className="kv-multi-badges">
+                      {parts.map((part, i) => <span key={i} className="soft-badge">{part.trim()}</span>)}
+                    </span>
+                  ) : str}
+                </div>
+              );
+            })}
           </div>
         </article>
 
