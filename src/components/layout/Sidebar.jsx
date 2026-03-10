@@ -11,7 +11,7 @@ const navItems = [
 ];
 
 function Sidebar() {
-  const { copy, language, toggleLanguage, toggleTheme, theme, pageCopy, brandTitle, openNewTicket } = useAppShell();
+  const { copy, language, toggleLanguage, pageCopy, brandTitle, openNewTicket } = useAppShell();
   const { signOut } = useAuth();
   const { showToast } = useToast();
 
@@ -67,16 +67,7 @@ function Sidebar() {
           </div>
         </div>
 
-        <div className="badge-row">
-          <span className="soft-badge">{copy.branchesBadge}</span>
-          <span className="soft-badge">React + Vite</span>
-          <span className="soft-badge">Supabase</span>
-        </div>
-
         <div className="toggle-row">
-          <button type="button" className="ghost-btn" onClick={toggleTheme}>
-            {theme === "dark" ? "🌙" : "☀️"} {copy.themeLabel}
-          </button>
           <button type="button" className="ghost-btn" onClick={toggleLanguage}>
             {language === "en" ? "🇺🇸 EN" : "🇸🇦 AR"}
           </button>

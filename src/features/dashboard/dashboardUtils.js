@@ -168,7 +168,7 @@ export function filterDashboardTickets(tickets, filters) {
   const brand = filters.brand || "all";
   const city = filters.city || "all";
   const search = filters.search || "";
-  const query = (filters.branchQuery || "").toLowerCase().trim();
+  const branch = filters.branch || "all";
   const now = Date.now();
   let list = [...tickets];
 
@@ -184,13 +184,7 @@ export function filterDashboardTickets(tickets, filters) {
   if (priority !== "all") list = list.filter((ticket) => ticket.priority === priority);
   if (brand !== "all") list = list.filter((ticket) => ticket.brand === brand);
   if (city !== "all") list = list.filter((ticket) => getTicketCity(ticket) === city);
-  if (query) {
-    list = list.filter((ticket) => {
-      const branch = String(ticket.branch || "").toLowerCase();
-      const city = String(getTicketCity(ticket) || "").toLowerCase();
-      return branch.includes(query) || city.includes(query);
-    });
-  }
+  if (branch !== "all") list = list.filter((ticket) => ticket.branch === branch);
   if (search) list = list.filter((ticket) => matchesTicketSearch(ticket, search));
 
   return list;
@@ -320,17 +314,21 @@ export function getDashboardCollections(filteredTickets) {
 
 export function getInsightPresets(copy) {
   return [
+    { key: "biggestIssues", title: copy.insightBiggestIssuesTitle, sub: copy.insightBiggestIssuesSub },
+    { key: "mostBreached", title: copy.insightMostBreachedTitle, sub: copy.insightMostBreachedSub },
+    { key: "highestOpen", title: copy.insightHighestOpenTitle, sub: copy.insightHighestOpenSub },
+    { key: "bestClosure", title: copy.insightBestClosureTitle, sub: copy.insightBestClosureSub },
+    { key: "highestOpenCity", title: copy.insightHighestOpenCityTitle, sub: copy.insightHighestOpenCitySub },
+    { key: "slowestReply", title: copy.insightSlowestReplyTitle, sub: copy.insightSlowestReplySub },
+    { key: "repeatCustomers", title: copy.insightRepeatCustomersTitle, sub: copy.insightRepeatCustomersSub },
+    { key: "topSource", title: copy.insightTopSourceTitle, sub: copy.insightTopSourceSub },
+    { key: "highPrioritySource", title: copy.insightHighPrioritySourceTitle, sub: copy.insightHighPrioritySourceSub },
     { key: "mostComplaints", title: copy.insightMostComplaintsTitle, sub: copy.insightMostComplaintsSub },
     { key: "mostComplaintsCity", title: copy.insightMostComplaintsCityTitle, sub: copy.insightMostComplaintsCitySub },
     { key: "foodQuality", title: copy.insightFoodQualityTitle, sub: copy.insightFoodQualitySub },
     { key: "foodQualityCity", title: copy.insightFoodQualityCityTitle, sub: copy.insightFoodQualityCitySub },
     { key: "topCategories", title: copy.insightTopCategoriesTitle, sub: copy.insightTopCategoriesSub },
-    { key: "topSource", title: copy.insightTopSourceTitle, sub: copy.insightTopSourceSub },
-    { key: "slowestReply", title: copy.insightSlowestReplyTitle, sub: copy.insightSlowestReplySub },
     { key: "nearSla", title: copy.insightNearSlaTitle, sub: copy.insightNearSlaSub },
-    { key: "highestOpen", title: copy.insightHighestOpenTitle, sub: copy.insightHighestOpenSub },
-    { key: "highestOpenCity", title: copy.insightHighestOpenCityTitle, sub: copy.insightHighestOpenCitySub },
-    { key: "biggestIssues", title: copy.insightBiggestIssuesTitle, sub: copy.insightBiggestIssuesSub },
   ];
 }
 
@@ -521,6 +519,24 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
     };
   }
 
+  if (key === "highPrioritySource") {
+    const highPriorityTickets = tickets.filter((ticket) => ticket.priority === "High");
+    const top = countBy(highPriorityTickets, (ticket) => ticket.sourceLabel || ticket.source, 5);
+    return {
+      mode: "preset",
+      activeKey: key,
+      title: copy.insightHighPrioritySourceTitle,
+      summary: top[0]
+        ? language === "ar"
+          ? `${top[0].label} هو المصدر الأعلى للتذاكر عالية الأولوية بعدد ${top[0].count} تذكرة.`
+          : `${top[0].label} generates the highest number of high-priority tickets with ${top[0].count} ticket(s).`
+        : language === "ar" ? "لا توجد تذاكر عالية الأولوية حاليًا." : "There are no high-priority tickets right now.",
+      metrics: [metric(copy.metricSource, top[0]?.label || "--"), metric(copy.metricTotalTickets, highPriorityTickets.length)],
+      items: top.map((row) => listItem(row.label, row.count, language === "ar" ? "تذاكر عالية الأولوية" : "high-priority tickets")),
+      exportRows: top.map((row) => ({ Source: row.label, HighPriorityTickets: row.count })),
+    };
+  }
+
   if (key === "slowestReply") {
     const branchRows = countBy(tickets, (ticket) => ticket.branch, 50)
       .map((row) => {
@@ -596,6 +612,24 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
     };
   }
 
+  if (key === "bestClosure") {
+    const closedTickets = tickets.filter((ticket) => ticket.status === "Closed");
+    const top = countBy(closedTickets, (ticket) => ticket.branch, 5);
+    return {
+      mode: "preset",
+      activeKey: key,
+      title: copy.insightBestClosureTitle,
+      summary: top[0]
+        ? language === "ar"
+          ? `${top[0].label} يغلق أكبر عدد من التذاكر بعدد ${top[0].count} تذكرة.`
+          : `${top[0].label} closes the most tickets with ${top[0].count} ticket(s).`
+        : language === "ar" ? "لا توجد تذاكر مغلقة حاليًا." : "There are no closed tickets right now.",
+      metrics: [metric(copy.metricClosedTickets, closedTickets.length), metric(copy.metricBranches, top.length)],
+      items: top.map((row) => listItem(row.label, row.count, language === "ar" ? "تذاكر مغلقة" : "closed tickets")),
+      exportRows: top.map((row) => ({ Branch: row.label, ClosedTickets: row.count })),
+    };
+  }
+
   if (key === "highestOpenCity") {
     const open = tickets.filter((ticket) => ticket.status !== "Closed");
     const top = countBy(open, (ticket) => ticket.cityLabel || getTicketCity(ticket), 5);
@@ -614,12 +648,72 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
     };
   }
 
+  if (key === "mostBreached") {
+    const breachedTickets = tickets.filter((ticket) => ticket.slaComputedStatus === "breached");
+    const top = countBy(breachedTickets, (ticket) => ticket.branch, 5);
+    return {
+      mode: "preset",
+      activeKey: key,
+      title: copy.insightMostBreachedTitle,
+      summary: top[0]
+        ? language === "ar"
+          ? `${top[0].label} لديه أعلى عدد من تذاكر SLA المتجاوزة بعدد ${top[0].count} تذكرة.`
+          : `${top[0].label} has the most breached SLA tickets with ${top[0].count} ticket(s).`
+        : language === "ar" ? "لا توجد تذاكر متجاوزة لـ SLA حاليًا." : "There are no breached SLA tickets right now.",
+      metrics: [metric(copy.metricOverdue, breachedTickets.length), metric(copy.metricBranches, top.length)],
+      items: top.map((row) => listItem(row.label, row.count, language === "ar" ? "تذاكر متجاوزة لـ SLA" : "breached SLA tickets")),
+      exportRows: top.map((row) => ({ Branch: row.label, BreachedTickets: row.count })),
+    };
+  }
+
+  if (key === "repeatCustomers") {
+    const ticketsByPhone = {};
+    tickets.forEach((ticket) => {
+      const digits = digitsOnly(ticket.customerPhone || ticket.raw?.customer_phone || "");
+      const tail = digits.slice(-8);
+      if (!tail) return;
+      if (!ticketsByPhone[tail]) ticketsByPhone[tail] = [];
+      ticketsByPhone[tail].push(ticket);
+    });
+
+    const repeatBranchMap = {};
+    Object.values(ticketsByPhone)
+      .filter((rows) => rows.length > 1)
+      .forEach((rows) => {
+        rows.forEach((ticket) => {
+          const branch = ticket.branch || "--";
+          if (!repeatBranchMap[branch]) repeatBranchMap[branch] = { customers: new Set(), tickets: 0 };
+          repeatBranchMap[branch].customers.add(ticket.customerPhone || "--");
+          repeatBranchMap[branch].tickets += 1;
+        });
+      });
+
+    const top = Object.entries(repeatBranchMap)
+      .map(([branch, row]) => ({ branch, customers: row.customers.size, tickets: row.tickets }))
+      .sort((a, b) => b.customers - a.customers || b.tickets - a.tickets)
+      .slice(0, 5);
+
+    return {
+      mode: "preset",
+      activeKey: key,
+      title: copy.insightRepeatCustomersTitle,
+      summary: top[0]
+        ? language === "ar"
+          ? `${top[0].branch} يظهر أعلى عدد من العملاء المتكررين بعدد ${top[0].customers} عميل و${top[0].tickets} تذكرة.`
+          : `${top[0].branch} shows the highest repeat-customer concentration with ${top[0].customers} customer(s) across ${top[0].tickets} ticket(s).`
+        : language === "ar" ? "لا توجد شكاوى متكررة كافية حاليًا." : "There is not enough repeat-customer activity right now.",
+      metrics: [metric(copy.metricBranches, top.length), metric(copy.metricRepeatStatus, top[0]?.customers || 0)],
+      items: top.map((row) => listItem(row.branch, row.customers, language === "ar" ? `${row.tickets} تذكرة متكررة` : `${row.tickets} repeat tickets`)),
+      exportRows: top.map((row) => ({ Branch: row.branch, RepeatCustomers: row.customers, RepeatTickets: row.tickets })),
+    };
+  }
+
   const open = tickets.filter((ticket) => ticket.status !== "Closed");
   const overdue = open.filter((ticket) => ticket.slaComputedStatus === "breached" || (ticket.slaDueAt && ticket.slaDueAt < Date.now()));
   const high = open.filter((ticket) => ticket.priority === "High");
   const topCategory = buildMultiValueBreakdown(open, (ticket) => ticket.categoryValues, 3).rows;
   const topBranch = countBy(open, (ticket) => ticket.branch, 3);
-    const topSource = countBy(open, (ticket) => ticket.sourceLabel || ticket.source, 3);
+  const topSource = countBy(open, (ticket) => ticket.sourceLabel || ticket.source, 3);
 
   return {
     mode: "preset",

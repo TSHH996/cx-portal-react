@@ -1,7 +1,6 @@
 function SettingsNav({ copy, activeTab, onSelect }) {
   const items = [
     { key: "profile", label: copy.settingsItemProfile },
-    { key: "branding", label: copy.settingsItemBranding },
     { key: "notifications", label: copy.settingsItemNotifications },
     { key: "preferences", label: copy.settingsItemPreferences },
     { key: "email", label: copy.settingsItemEmail },

@@ -359,6 +359,11 @@ body[data-theme="light"] .rptSelect, body[data-theme="light"] .rptDateTrigger { 
 .settingsItem.active, .active-chip { background: linear-gradient(135deg, rgba(124,58,237,.13), rgba(56,189,248,.07)); border-color: rgba(124,58,237,.22); color: var(--text); }
 .settingsContentReact { display: flex; flex-direction: column; gap: 12px; }
 .settingsCards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.settingsCardsSingle { grid-template-columns: 1fr; }
+.settingsProfileGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.settingsProfileItem { border: 1px solid rgba(255,255,255,.06); border-radius: 14px; background: rgba(255,255,255,.02); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; text-align: start; }
+.settingsProfileLabel { font-size: 11px; font-weight: 700; color: var(--muted); }
+.settingsProfileValue { font-size: 14px; font-weight: 800; color: var(--text); }
 .field-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .settingsInput { border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--text); padding: 11px 13px; border-radius: 14px; font-size: 13px; min-width: min(100%, 320px); }
 
@@ -611,7 +616,7 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
 
 .smart-insights-card { display: grid; gap: 10px; min-height: 0; }
 .smart-insights-head, .insights-result-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.insights-controls-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.insights-controls-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: end; }
 .insights-lookup-box, .insights-result-panel { border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); border-radius: 16px; padding: 12px; }
 .lookup-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -713,7 +718,7 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
   .sidebar-shell { border-inline-end: 0; border-bottom: 1px solid var(--line); }
   .dashboard-grid, .dashboard-stats-grid, .analytics-split, .content-grid.two-up, .tickets-page-grid { grid-template-columns: 1fr; }
   .dashboard-side-col { position: static; }
-  .settingsLayoutReact, .settingsCards { grid-template-columns: 1fr; }
+  .settingsLayoutReact, .settingsCards, .settingsProfileGrid { grid-template-columns: 1fr; }
   .rptMetricGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .rptGrid3 { grid-template-columns: 1fr; }
   .rptExportGrid { grid-template-columns: 1fr 1fr; }

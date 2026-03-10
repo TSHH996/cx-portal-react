@@ -10,8 +10,9 @@ import { filterTickets } from "../features/tickets/ticketUtils";
 function TicketsPage() {
   const { language, copy, searchQuery, setSearchQuery } = useAppShell();
   const { showToast } = useToast();
-  const { tickets, loading, error, saveReply, markReplied, closeTicket } = usePortalData(language);
-  const [filters, setFilters] = useState({ status: "all", priority: "all", branch: "" });
+  const { tickets, branches, loading, error, saveReply, markReplied, closeTicket } = usePortalData(language);
+  const [filters, setFilters] = useState({ status: "all", priority: "all", branch: "all" });
+  const branchOptions = useMemo(() => branches.map((branch) => branch.branch_name), [branches]);
   const [selectedId, setSelectedId] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -45,6 +46,7 @@ function TicketsPage() {
       <TicketsFiltersSidebar
         copy={copy}
         filters={{ ...filters, search: searchQuery }}
+        branchOptions={branchOptions}
         resultCount={filteredTickets.length}
         onChange={(key, value) => {
           if (key === "search") {

@@ -1,6 +1,6 @@
 import { getLocalizedCity } from "../../features/portal/newTicketConfig";
 
-function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, onReset }) {
+function DashboardFilters({ copy, filters, brandOptions, cityOptions, branchOptions, onChange, onReset }) {
   return (
     <section className="surface-card dashboard-filter-row">
       <div className="dashboard-filter-grid">
@@ -53,7 +53,10 @@ function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, 
 
         <label className="filter-block branch-block">
           <span>{copy.dashboardFilterBranch}</span>
-          <input dir="auto" value={filters.branchQuery} onChange={(e) => onChange("branchQuery", e.target.value)} placeholder={copy.dashboardBranchPlaceholder} />
+          <select dir="auto" value={filters.branch} onChange={(e) => onChange("branch", e.target.value)}>
+            <option value="all">{copy.insightsAllBranches}</option>
+            {branchOptions.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
+          </select>
         </label>
 
         <div className="filter-block action-block">

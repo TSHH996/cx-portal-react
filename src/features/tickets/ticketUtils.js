@@ -4,13 +4,13 @@ export function filterTickets(tickets, filters) {
   const query = (filters.search || "").toLowerCase().trim();
   const status = filters.status || "all";
   const priority = filters.priority || "all";
-  const branchQuery = (filters.branch || "").toLowerCase().trim();
+  const branch = filters.branch || "all";
 
   return tickets.filter((ticket) => {
     if (!matchesTicketSearch(ticket, query)) return false;
     if (status !== "all" && ticket.status !== status) return false;
     if (priority !== "all" && ticket.priority !== priority) return false;
-    if (branchQuery && !String(ticket.branch || "").toLowerCase().includes(branchQuery)) return false;
+    if (branch !== "all" && ticket.branch !== branch) return false;
     return true;
   });
 }

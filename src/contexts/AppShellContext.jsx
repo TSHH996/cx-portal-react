@@ -4,42 +4,30 @@ import { copyByLanguage, defaultLanguage, pageCopy } from "../lib/i18n";
 
 const AppShellContext = createContext(null);
 
-function getInitialTheme() {
-  return localStorage.getItem("cx-theme") || "dark";
-}
-
 function getInitialLanguage() {
   return localStorage.getItem("cx-language") || defaultLanguage;
 }
 
-function getInitialBrandTitle() {
-  return localStorage.getItem("cx-brand-title") || "CX Portal";
-}
-
 export function AppShellProvider({ children }) {
-  const [theme, setTheme] = useState(getInitialTheme);
   const [language, setLanguage] = useState(getInitialLanguage);
-  const [brandTitle, setBrandTitle] = useState(getInitialBrandTitle);
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const direction = language === "ar" ? "rtl" : "ltr";
   const copy = copyByLanguage[language] || copyByLanguage.en;
+  const theme = "dark";
+  const brandTitle = copy.brandTitle || copyByLanguage.en.brandTitle;
 
   useEffect(() => {
-    document.body.dataset.theme = theme;
-    localStorage.setItem("cx-theme", theme);
-  }, [theme]);
+    document.body.dataset.theme = "dark";
+    localStorage.removeItem("cx-theme");
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = language;
     document.documentElement.dir = direction;
     localStorage.setItem("cx-language", language);
   }, [direction, language]);
-
-  useEffect(() => {
-    localStorage.setItem("cx-brand-title", brandTitle);
-  }, [brandTitle]);
 
   const value = useMemo(
     () => ({
@@ -49,11 +37,8 @@ export function AppShellProvider({ children }) {
       brandTitle,
       copy,
       pageCopy,
-      toggleTheme: () => setTheme((current) => (current === "dark" ? "light" : "dark")),
       toggleLanguage: () => setLanguage((current) => (current === "en" ? "ar" : "en")),
-      setTheme,
       setLanguage,
-      setBrandTitle,
       openNewTicket: () => setIsNewTicketOpen(true),
       closeNewTicket: () => setIsNewTicketOpen(false),
       isNewTicketOpen,

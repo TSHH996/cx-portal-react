@@ -4,6 +4,22 @@ import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
 
+function formatAccountName(user) {
+  const metadata = user?.user_metadata || {};
+  const appMetadata = user?.app_metadata || {};
+  const explicit = metadata.full_name || metadata.name || metadata.display_name || appMetadata.display_name || appMetadata.name;
+  if (explicit) return explicit;
+
+  const email = user?.email || "";
+  const prefix = email.split("@")[0] || "";
+  if (!prefix) return "Admin User";
+  return prefix
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
@@ -44,8 +60,16 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => ({
     session,
     user,
+    profile: user ? {
+      email: user.email || "",
+      name: formatAccountName(user),
+      role: "admin",
+      isAdmin: true,
+      id: user.id,
+    } : null,
     loading,
     isAuthenticated: Boolean(session),
+    isAdmin: Boolean(user),
     async signOut() {
       if (!supabase) return;
       await supabase.auth.signOut();

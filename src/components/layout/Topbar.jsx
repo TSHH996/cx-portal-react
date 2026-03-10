@@ -40,9 +40,7 @@ function Topbar({ title, subtitle }) {
         <div className="search-shell">
           <span className="search-icon">🔎</span>
           <input ref={inputRef} dir="auto" type="text" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={copy.searchPlaceholder} aria-label={copy.searchPlaceholder} />
-          <span className="keycap">Ctrl/⌘ K</span>
         </div>
-        <button type="button" className="ghost-btn">🔄 {copy.refresh}</button>
         <button type="button" className="ghost-btn">⬇️ {copy.export}</button>
       </div>
     </header>

@@ -1,3 +1,5 @@
+import { useAuth } from "../../contexts/AuthContext";
+
 function PanelCard({ title, subtitle, children }) {
   return (
     <div className="surface-card">
@@ -11,29 +13,31 @@ function PanelCard({ title, subtitle, children }) {
 }
 
 export function ProfilePanel({ settingsCopy }) {
+  const { profile } = useAuth();
+
   return (
     <PanelCard title={settingsCopy.profileTitle} subtitle={settingsCopy.profileSub}>
       <div className="panel-card">
         <div className="panel-heading">{settingsCopy.profileBodyTitle}</div>
-        <div className="panel-note">{settingsCopy.profileBodyText}</div>
-      </div>
-    </PanelCard>
-  );
-}
-
-export function BrandingPanel({ settingsCopy, brandTitle, onBrandTitleChange, onSaveBrand }) {
-  return (
-    <PanelCard title={settingsCopy.brandingTitle} subtitle={settingsCopy.brandingSub}>
-      <div className="panel-card">
-        <div className="panel-heading">{settingsCopy.portalTitle}</div>
-        <div className="field-row">
-          <input className="settingsInput" value={brandTitle} onChange={(e) => onBrandTitleChange(e.target.value)} placeholder={settingsCopy.portalTitle} />
-          <button type="button" className="primary-btn" onClick={onSaveBrand}>💾 {settingsCopy.save}</button>
+        <div className="settingsProfileGrid">
+          <div className="settingsProfileItem">
+            <span className="settingsProfileLabel">{settingsCopy.accountNameLabel}</span>
+            <bdi className="settingsProfileValue">{profile?.name || settingsCopy.profileUnavailable}</bdi>
+          </div>
+          <div className="settingsProfileItem">
+            <span className="settingsProfileLabel">{settingsCopy.accountEmailLabel}</span>
+            <bdi className="settingsProfileValue">{profile?.email || settingsCopy.profileUnavailable}</bdi>
+          </div>
+          <div className="settingsProfileItem">
+            <span className="settingsProfileLabel">{settingsCopy.accountRoleLabel}</span>
+            <bdi className="settingsProfileValue">{profile?.role === "admin" ? settingsCopy.accountRoleAdmin : settingsCopy.profileUnavailable}</bdi>
+          </div>
+          <div className="settingsProfileItem">
+            <span className="settingsProfileLabel">{settingsCopy.accountAccessLabel}</span>
+            <span className="soft-badge good">{profile?.isAdmin ? settingsCopy.accountAccessAdmin : settingsCopy.profileUnavailable}</span>
+          </div>
         </div>
-      </div>
-      <div className="panel-card">
-        <div className="panel-heading">{settingsCopy.emailModePanelTitle}</div>
-        <div className="panel-note">{settingsCopy.emailModePanelText}</div>
+        <div className="panel-note">{settingsCopy.profileBodyText}</div>
       </div>
     </PanelCard>
   );
@@ -50,17 +54,10 @@ export function NotificationsPanel({ settingsCopy }) {
   );
 }
 
-export function PreferencesPanel({ settingsCopy, theme, language, setTheme, setLanguage }) {
+export function PreferencesPanel({ settingsCopy, language, setLanguage }) {
   return (
     <PanelCard title={settingsCopy.preferencesTitle} subtitle={settingsCopy.preferencesSub}>
-      <div className="settingsCards">
-        <div className="panel-card">
-          <div className="panel-heading">{settingsCopy.currentTheme}</div>
-          <div className="field-row">
-            <button type="button" className={`ghost-btn${theme === "dark" ? " active-chip" : ""}`} onClick={() => setTheme("dark")}>🌙 {settingsCopy.darkTheme}</button>
-            <button type="button" className={`ghost-btn${theme === "light" ? " active-chip" : ""}`} onClick={() => setTheme("light")}>☀️ {settingsCopy.lightTheme}</button>
-          </div>
-        </div>
+      <div className="settingsCards settingsCardsSingle">
         <div className="panel-card">
           <div className="panel-heading">{settingsCopy.currentLanguage}</div>
           <div className="field-row">
@@ -68,6 +65,10 @@ export function PreferencesPanel({ settingsCopy, theme, language, setTheme, setL
             <button type="button" className={`ghost-btn${language === "ar" ? " active-chip" : ""}`} onClick={() => setLanguage("ar")}>🇸🇦 {settingsCopy.arabicLanguage}</button>
           </div>
         </div>
+      </div>
+      <div className="panel-card">
+        <div className="panel-heading">{settingsCopy.darkModeTitle}</div>
+        <div className="panel-note">{settingsCopy.darkModeText}</div>
       </div>
       <div className="panel-card">
         <div className="panel-heading">{settingsCopy.preferencesBodyTitle}</div>

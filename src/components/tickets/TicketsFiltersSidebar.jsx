@@ -1,4 +1,4 @@
-function TicketsFiltersSidebar({ copy, filters, resultCount, onChange }) {
+function TicketsFiltersSidebar({ copy, filters, branchOptions, resultCount, onChange }) {
   return (
     <div className="ticket-sidebar-column">
       <section className="panel-card">
@@ -18,7 +18,10 @@ function TicketsFiltersSidebar({ copy, filters, resultCount, onChange }) {
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
-          <input dir="auto" value={filters.branch} onChange={(e) => onChange("branch", e.target.value)} placeholder={copy.filterBranchPlaceholder} />
+          <select dir="auto" value={filters.branch} onChange={(e) => onChange("branch", e.target.value)}>
+            <option value="all">{copy.insightsAllBranches}</option>
+            {branchOptions.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
+          </select>
         </div>
         <div className="filter-footer"><span className="soft-badge">{resultCount} {copy.ticketCount}</span></div>
       </section>
