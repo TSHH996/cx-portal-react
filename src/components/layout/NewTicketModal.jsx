@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppShell } from "../../contexts/AppShellContext";
 import { useToast } from "../../contexts/ToastContext";
-import { BRANDS, CITIES, computeSlaDueAt, FEEDBACK_CATEGORIES, FEEDBACK_TYPES, PRIORITIES, resolveBranchCity, STATUSES, SUB_CATEGORIES } from "../../features/portal/newTicketConfig";
+import { BRANDS, computeSlaDueAt, getLocalizedCategory, getLocalizedCategoryOptions, getLocalizedCityOptions, getLocalizedPriorityOptions, getLocalizedSourceOptions, getLocalizedStatusOptions, getLocalizedSubCategory, getLocalizedSubCategoryOptions, resolveBranchCity, SUB_CATEGORIES } from "../../features/portal/newTicketConfig";
 import { usePortalData } from "../../features/portal/usePortalData";
 import { joinMultiValue } from "../../lib/multiValue";
 
@@ -18,7 +18,7 @@ function initialForm(copy) {
     feedback_type: "WhatsApp",
     feedback_category: [],
     sub_category: [],
-    description: copy.descriptionDefault || "test",
+    description: copy.descriptionDefault || "",
     files: [],
   };
 }
@@ -33,7 +33,7 @@ function MultiChoiceField({ label, helper, values, options, emptyText, onToggle,
   const helperText = disabled && !options.length
     ? emptyText
     : values.length
-      ? helper.replace("{values}", values.join(" · "))
+      ? helper.replace("{values}", options.filter((option) => values.includes(option.value)).map((option) => option.label).join(" · "))
       : helper.replace("{values}", emptyText);
 
   return (
@@ -42,18 +42,18 @@ function MultiChoiceField({ label, helper, values, options, emptyText, onToggle,
       <div className={`multiPickField${disabled ? " is-disabled" : ""}`}>
         {options.length ? (
           <div className="multiPickGrid">
-            {options.map((value) => {
-              const active = values.includes(value);
+            {options.map((option) => {
+              const active = values.includes(option.value);
               return (
                 <button
-                  key={value}
+                  key={option.value}
                   type="button"
                   className={`multiPickChip${active ? " active" : ""}`}
-                  onClick={() => onToggle(value)}
+                  onClick={() => onToggle(option.value)}
                   aria-pressed={active}
                   disabled={disabled}
                 >
-                  {value}
+                  {option.label}
                 </button>
               );
             })}
@@ -64,7 +64,7 @@ function MultiChoiceField({ label, helper, values, options, emptyText, onToggle,
         <div className="panel-note">{helperText}</div>
         {values.length ? (
           <div className="multiPickSelection">
-            {values.map((value) => <span key={value} className="soft-badge">{value}</span>)}
+            {options.filter((option) => values.includes(option.value)).map((option) => <span key={option.value} className="soft-badge">{option.label}</span>)}
           </div>
         ) : null}
       </div>
@@ -84,6 +84,11 @@ function NewTicketModal() {
     () => branches.map((branch) => ({ ...branch, city: resolveBranchCity(branch.branch_name, branch.city) })),
     [branches]
   );
+  const cityOptions = useMemo(() => getLocalizedCityOptions(language), [language]);
+  const priorityOptions = useMemo(() => getLocalizedPriorityOptions(language), [language]);
+  const statusOptions = useMemo(() => getLocalizedStatusOptions(language), [language]);
+  const sourceOptions = useMemo(() => getLocalizedSourceOptions(language), [language]);
+  const categoryOptions = useMemo(() => getLocalizedCategoryOptions(language), [language]);
 
   const filteredBranches = useMemo(
     () => (form.city ? normalizedBranches.filter((branch) => branch.city === form.city) : normalizedBranches),
@@ -95,8 +100,8 @@ function NewTicketModal() {
     (form.feedback_category || []).forEach((cat) => {
       (SUB_CATEGORIES[cat] || []).forEach((opt) => opts.add(opt));
     });
-    return [...opts].sort();
-  }, [form.feedback_category]);
+    return getLocalizedSubCategoryOptions([...opts].sort(), language);
+  }, [form.feedback_category, language]);
 
   if (!isNewTicketOpen) return null;
 
@@ -156,7 +161,7 @@ function NewTicketModal() {
         feedback_type: form.feedback_type.trim(),
         feedback_category: joinMultiValue(form.feedback_category) || null,
         sub_category: joinMultiValue(form.sub_category) || null,
-        description: form.description.trim() || copy.descriptionDefault || "test",
+        description: form.description.trim() || copy.descriptionDefault || "",
         priority: form.priority,
         status: form.status,
         sla_due_at: computeSlaDueAt(form.priority),
@@ -193,25 +198,25 @@ function NewTicketModal() {
           </div>
 
           <div className="grid2React">
-            <div className="fieldReact"><label>{copy.labelCity || "City"}</label><select value={form.city} onChange={(e) => handleCityChange(e.target.value)}><option value="">{copy.optionSelectCity || "Select city"}</option>{CITIES.map((city) => <option key={city} value={city}>{city}</option>)}</select></div>
+            <div className="fieldReact"><label>{copy.labelCity || "City"}</label><select value={form.city} onChange={(e) => handleCityChange(e.target.value)}><option value="">{copy.optionSelectCity || "Select city"}</option>{cityOptions.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}</select></div>
             <div className="fieldReact"><label>{copy.labelBranchName || "Branch Name"}</label><select value={form.branch_name} onChange={(e) => handleBranchChange(e.target.value)}><option value="">{copy.optionSelectBranch || "Select branch"}</option>{filteredBranches.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select>{form.city && filteredBranches.length === 0 ? <div className="panel-note" style={{ marginTop: 6 }}>{copy.noBranchesForCity || "No branches are available for the selected city yet."}</div> : null}</div>
           </div>
 
           <div className="grid2React">
-            <div className="fieldReact"><label>{copy.labelBrand || "Brand"}</label><select value={form.brand} onChange={(e) => setForm((current) => ({ ...current, brand: e.target.value }))}><option value="">Select brand</option>{BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></div>
-            <div className="fieldReact"><label>{copy.labelPriority || "Priority"}</label><select value={form.priority} onChange={(e) => setForm((current) => ({ ...current, priority: e.target.value }))}>{PRIORITIES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
+            <div className="fieldReact"><label>{copy.labelBrand || "Brand"}</label><select value={form.brand} onChange={(e) => setForm((current) => ({ ...current, brand: e.target.value }))}><option value="">{copy.optionSelectBrand || "Select brand"}</option>{BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></div>
+            <div className="fieldReact"><label>{copy.labelPriority || "Priority"}</label><select value={form.priority} onChange={(e) => setForm((current) => ({ ...current, priority: e.target.value }))}>{priorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
           </div>
 
-          <div className="fieldReact full"><label>{copy.labelStatus || "Status"}</label><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value }))}>{STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
+          <div className="fieldReact full"><label>{copy.labelStatus || "Status"}</label><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value }))}>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
 
-          <div className="fieldReact full"><label>{copy.labelFeedbackType || "Feedback Source"}</label><select value={form.feedback_type} onChange={(e) => setForm((current) => ({ ...current, feedback_type: e.target.value }))}>{FEEDBACK_TYPES.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
+          <div className="fieldReact full"><label>{copy.labelFeedbackType || "Feedback Source"}</label><select value={form.feedback_type} onChange={(e) => setForm((current) => ({ ...current, feedback_type: e.target.value }))}>{sourceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
 
           <div className="grid2React">
             <MultiChoiceField
               label={copy.labelFeedbackCategory || "Feedback Category"}
               helper={copy.multiSelectHelper || "Select one or more options. Current selection: {values}"}
               values={form.feedback_category}
-              options={FEEDBACK_CATEGORIES}
+              options={categoryOptions}
               emptyText={copy.multiSelectEmpty || "No selection yet."}
               onToggle={handleCategoryToggle}
             />
@@ -227,7 +232,7 @@ function NewTicketModal() {
           </div>
 
           <div className="fieldReact full"><label>{copy.labelDescription || "Description"}</label><textarea value={form.description} onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))} /></div>
-          <div className="fieldReact full"><label>{copy.labelAttachments || "Attachments"}</label><input type="file" multiple onChange={(e) => setForm((current) => ({ ...current, files: Array.from(e.target.files || []) }))} /><div className="panel-note">{form.files.length ? `${form.files.length} file(s) selected` : copy.attachmentsHelper || "Upload images, PDFs, or documents."}</div></div>
+          <div className="fieldReact full"><label>{copy.labelAttachments || "Attachments"}</label><input type="file" multiple onChange={(e) => setForm((current) => ({ ...current, files: Array.from(e.target.files || []) }))} /><div className="panel-note">{form.files.length ? (copy.filesSelectedLabel || "{count} files selected").replace("{count}", form.files.length) : copy.attachmentsHelper || "Upload images, PDFs, or documents."}</div></div>
         </div>
 
         <div className="modalActionsReact">

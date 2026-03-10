@@ -19,20 +19,20 @@ export function ticketInfoRows(ticket, labels) {
   if (!ticket) return [];
   return [
     [labels.ticket, ticket.id],
-    [labels.status, ticket.status],
-    [labels.priority, ticket.priority],
+    [labels.status, ticket.statusLabel || ticket.status],
+    [labels.priority, ticket.priorityLabel || ticket.priority],
     [labels.branch, ticket.branch],
-    [labels.city, ticket.city || "--"],
+    [labels.city, ticket.cityLabel || ticket.city || "--"],
     [labels.brand, ticket.brand],
-    [labels.source, ticket.source],
-    [labels.category, ticket.categoryValues?.length ? ticket.categoryValues : ticket.category],
-    [labels.subCategory, ticket.subCategoryValues?.length ? ticket.subCategoryValues : ticket.subCategory],
+    [labels.source, ticket.sourceLabel || ticket.source],
+    [labels.category, ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues?.length ? ticket.categoryValues : ticket.categoryLabel || ticket.category],
+    [labels.subCategory, ticket.subCategoryLabels?.length ? ticket.subCategoryLabels : ticket.subCategoryValues?.length ? ticket.subCategoryValues : ticket.subCategoryLabel || ticket.subCategory],
     [labels.customer, ticket.customerName],
     [labels.phone, ticket.customerPhone],
     [labels.assigned, ticket.assignedTo || "--"],
     [labels.created, fmtDate(ticket.createdAt)],
     [labels.sla, ticket.slaRemainingText || "--"],
-    [labels.slaStatus, ticket.slaComputedStatus || "pending"],
+    [labels.slaStatus, ticket.slaComputedStatusLabel || ticket.slaComputedStatus || "pending"],
   ];
 }
 

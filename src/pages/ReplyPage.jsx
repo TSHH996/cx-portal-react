@@ -68,8 +68,8 @@ function ReplyPage() {
                 <div>
                   <label>{copy.replyStatusLabel}</label>
                   <select value={status} onChange={(e) => setStatus(e.target.value)} disabled={submitted}>
-                    <option value="Replied">Replied</option>
-                    <option value="Closed">Closed</option>
+                    <option value="Replied">{copy.filterReplied}</option>
+                    <option value="Closed">{copy.filterClosed}</option>
                   </select>
                 </div>
                 <div>

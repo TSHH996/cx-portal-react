@@ -17,8 +17,8 @@ function TicketsListPane({ copy, tickets, selectedId, onSelect }) {
             <div className="ticket-row-meta">
               <div className="ticket-row-title">{ticket.subject || `${ticket.id} • ${ticket.branch}`}</div>
               <div className="ticket-row-badges">
-                <span className={`soft-badge ${priorityBadgeClass(ticket.priority)}`}>{ticket.priority}</span>
-                <span className={`soft-badge ${statusBadgeClass(ticket.status)}`}>{ticket.status}</span>
+                <span className={`soft-badge ${priorityBadgeClass(ticket.priority)}`}>{ticket.priorityLabel || ticket.priority}</span>
+                <span className={`soft-badge ${statusBadgeClass(ticket.status)}`}>{ticket.statusLabel || ticket.status}</span>
                 <span className="soft-badge">{ticket.branch}</span>
               </div>
             </div>

@@ -1,3 +1,5 @@
+import { getLocalizedCity } from "../../features/portal/newTicketConfig";
+
 function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, onReset }) {
   return (
     <section className="surface-card dashboard-filter-row">
@@ -16,10 +18,10 @@ function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, 
           <span>{copy.dashboardFilterStatus}</span>
           <select value={filters.status} onChange={(e) => onChange("status", e.target.value)}>
             <option value="all">{copy.dashboardStatusAll}</option>
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Replied">Replied</option>
-            <option value="Closed">Closed</option>
+            <option value="Open">{copy.filterOpen}</option>
+            <option value="In Progress">{copy.filterInProgress}</option>
+            <option value="Replied">{copy.filterReplied}</option>
+            <option value="Closed">{copy.filterClosed}</option>
           </select>
         </label>
 
@@ -35,7 +37,7 @@ function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, 
           <span>{copy.dashboardFilterCity}</span>
           <select value={filters.city} onChange={(e) => onChange("city", e.target.value)}>
             <option value="all">{copy.insightsAllCities}</option>
-            {cityOptions.map((city) => <option key={city} value={city}>{city}</option>)}
+            {cityOptions.map((city) => <option key={city} value={city}>{getLocalizedCity(city, document.documentElement.lang)}</option>)}
           </select>
         </label>
 
@@ -43,9 +45,9 @@ function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, 
           <span>{copy.dashboardFilterPriority}</span>
           <select value={filters.priority} onChange={(e) => onChange("priority", e.target.value)}>
             <option value="all">{copy.dashboardPriorityAll}</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
+            <option value="High">{copy.filterHigh}</option>
+            <option value="Medium">{copy.filterMedium}</option>
+            <option value="Low">{copy.filterLow}</option>
           </select>
         </label>
 

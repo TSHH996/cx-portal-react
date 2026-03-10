@@ -47,12 +47,12 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
 
   return (
     <section className="ticket-detail-card">
-      <div className="detail-head">
-        <div className="detail-left">
-          <div className="detail-eyebrow">{copy.detailEyebrow}</div>
-          <div className="detail-title">{ticket.subject || ticket.id}</div>
-          <div className="detail-subtitle">{ticket.id} • {ticket.branch} • {ticket.status}</div>
-        </div>
+        <div className="detail-head">
+          <div className="detail-left">
+            <div className="detail-eyebrow">{copy.detailEyebrow}</div>
+            <div className="detail-title">{ticket.subject || ticket.id}</div>
+            <div className="detail-subtitle"><bdi>{ticket.id}</bdi> • {ticket.branch} • {ticket.statusLabel || ticket.status}</div>
+          </div>
         <div className="detail-actions">
           <button type="button" className="ghost-btn" onClick={onAssign}>{copy.btnAssignTxt}</button>
           <button type="button" className="ghost-btn good" onClick={() => onClose(ticket.rowId)} disabled={busy}>{copy.btnCloseTxt}</button>
@@ -92,7 +92,7 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
               <button type="button" className="primary-btn" onClick={() => onSaveReply(ticket.rowId, replyText)} disabled={busy}>{copy.btnSaveReplyTxt}</button>
               <button type="button" className="ghost-btn warn" onClick={() => onMarkReplied(ticket.rowId)} disabled={busy}>{copy.btnMarkRepliedTxt}</button>
             </div>
-            <div className="panel-note">{ticket.replyAt ? `${copy.replyByMeta} ${ticket.replyBy || "Branch"} • ${fmtDate(ticket.replyAt)}` : copy.noBranchReplyYet}</div>
+            <div className="panel-note">{ticket.replyAt ? `${copy.replyByMeta} ${ticket.replyBy || copy.replyByBranchTimeline} • ${fmtDate(ticket.replyAt)}` : copy.noBranchReplyYet}</div>
           </div>
         </article>
 

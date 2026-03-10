@@ -1,4 +1,5 @@
 import { buildMultiValueBreakdown, formatMultiValue, hasMultiValue, splitMultiValue } from "../../lib/multiValue";
+import { getLocalizedCategory, getLocalizedCity, getLocalizedPriority, getLocalizedSlaStatus, getLocalizedSource, getLocalizedStatus, getLocalizedSubCategory } from "../portal/newTicketConfig";
 
 export function pad(value) {
   return String(value).padStart(2, "0");
@@ -30,13 +31,19 @@ export function matchesTicketSearch(ticket, query) {
     ticket.ticketNo,
     ticket.subject,
     ticket.status,
+    ticket.statusLabel,
     ticket.priority,
+    ticket.priorityLabel,
     ticket.branch,
     ticket.city,
+    ticket.cityLabel,
     ticket.brand,
     ticket.category,
+    ticket.categoryLabel,
     ticket.subCategory,
+    ticket.subCategoryLabel,
     ticket.source,
+    ticket.sourceLabel,
     ticket.customerName,
     ticket.customerPhone,
     ticket.description,
@@ -90,6 +97,17 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
   const categoryValues = splitMultiValue(row.feedback_category || row.category);
   const subCategoryValues = splitMultiValue(row.sub_category);
   const city = row.city || row.branch_city || row.city_name || row.branch_city_name || branchCityByName[row.branch_name] || "Unspecified";
+  const status = row.status || "Open";
+  const priority = row.priority || "Medium";
+  const source = row.feedback_type || row.source || "--";
+  const categoryLabels = categoryValues.map((value) => getLocalizedCategory(value, language));
+  const subCategoryLabels = subCategoryValues.map((value) => getLocalizedSubCategory(value, language));
+  const customerName = row.customer_name === "Test Customer" && language === "ar"
+    ? "عميل تجريبي"
+    : row.customer_name || "--";
+  const description = row.description === "test" && language === "ar"
+    ? "نص تجريبي"
+    : row.description || "--";
   const now = Date.now();
 
   let slaComputedStatus = row.sla_status || "pending";
@@ -111,21 +129,29 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
     id: ticketIdLabel,
     subject: `${ticketIdLabel} • ${row.branch_name || "--"}`,
     ticketNo: row.ticket_no ?? null,
-    status: row.status || "Open",
-    priority: row.priority || "Medium",
+    status,
+    statusLabel: getLocalizedStatus(status, language),
+    priority,
+    priorityLabel: getLocalizedPriority(priority, language),
     branch: row.branch_name || "--",
     city,
+    cityLabel: getLocalizedCity(city, language),
     brand: row.brand || "--",
     category: formatMultiValue(categoryValues),
+    categoryLabel: formatMultiValue(categoryLabels),
     categoryValues,
+    categoryLabels,
     subCategory: formatMultiValue(subCategoryValues),
+    subCategoryLabel: formatMultiValue(subCategoryLabels),
     subCategoryValues,
-    source: row.feedback_type || row.source || "--",
-    customerName: row.customer_name || "--",
+    subCategoryLabels,
+    source,
+    sourceLabel: getLocalizedSource(source, language),
+    customerName,
     customerPhone: row.customer_phone || "--",
     createdAt,
     assignedTo: row.assign_to || row.assigned_to || "",
-    description: row.description || "--",
+    description,
     branchReply: latestReply?.reply_text || "",
     replyBy: latestReply?.reply_by || "",
     replyAt: latestReply?.created_at ? new Date(latestReply.created_at).getTime() : null,
@@ -133,6 +159,7 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
     attachments,
     slaDueAt,
     slaComputedStatus,
+    slaComputedStatusLabel: getLocalizedSlaStatus(slaComputedStatus, language),
     slaRemainingText,
     raw: row,
   };
@@ -286,11 +313,11 @@ export function buildRecentActivity(filteredTickets) {
 
 export function getDashboardCollections(filteredTickets) {
   return {
-    source: countBy(filteredTickets, (ticket) => ticket.raw?.source || ticket.source),
+    source: countBy(filteredTickets, (ticket) => ticket.sourceLabel || ticket.raw?.source || ticket.source),
     brand: countBy(filteredTickets, (ticket) => ticket.brand),
-    city: countBy(filteredTickets, (ticket) => getTicketCity(ticket)),
-    feedbackType: countBy(filteredTickets, (ticket) => ticket.raw?.feedback_type || ticket.source),
-    categories: buildMultiValueBreakdown(filteredTickets, (ticket) => ticket.categoryValues).rows,
+    city: countBy(filteredTickets, (ticket) => ticket.cityLabel || getTicketCity(ticket)),
+    feedbackType: countBy(filteredTickets, (ticket) => ticket.sourceLabel || ticket.raw?.feedback_type || ticket.source),
+    categories: buildMultiValueBreakdown(filteredTickets, (ticket) => ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues).rows,
     branches: countBy(filteredTickets, (ticket) => ticket.branch),
   };
 }
@@ -376,7 +403,7 @@ export function buildCustomerLookup(tickets, phone, copy, language) {
   const matches = getPhoneMatches(tickets, phone);
   if (!matches.length) return null;
   const latest = matches[0];
-  const categoryCounts = buildMultiValueBreakdown(matches, (ticket) => ticket.categoryValues, 5).rows;
+  const categoryCounts = buildMultiValueBreakdown(matches, (ticket) => ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues, 5).rows;
   const repeated = matches.length > 1;
   return {
     mode: "lookup",
@@ -397,15 +424,15 @@ export function buildCustomerLookup(tickets, phone, copy, language) {
       listItem(copy.metricTopCategory, categoryCounts[0]?.label || "--", language === "ar"
         ? `الأكثر تكرارًا بعدد ${categoryCounts[0]?.count || 0} تذكرة`
         : `Most repeated across ${categoryCounts[0]?.count || 0} ticket(s)`),
-      ...matches.slice(0, 5).map((ticket) => listItem(`${ticket.id} — ${ticket.branch}`, ticket.status, `${ticket.category} • ${fmtDate(ticket.createdAt)}`)),
+      ...matches.slice(0, 5).map((ticket) => listItem(`${ticket.id} — ${ticket.branch}`, ticket.statusLabel || ticket.status, `${ticket.categoryLabel || ticket.category} • ${fmtDate(ticket.createdAt)}`)),
     ],
     exportRows: matches.map((ticket) => ({
       Ticket: ticket.id,
       Branch: ticket.branch,
       Brand: ticket.brand,
-      Status: ticket.status,
-      Category: ticket.category,
-      Source: ticket.source,
+      Status: ticket.statusLabel || ticket.status,
+      Category: ticket.categoryLabel || ticket.category,
+      Source: ticket.sourceLabel || ticket.source,
       Created: fmtDate(ticket.createdAt),
     })),
   };
@@ -416,13 +443,14 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
     const relevant = tickets.filter((ticket) => !category || hasMultiValue(ticket.categoryValues, category));
     const top = countBy(relevant, (ticket) => ticket.branch, 5);
     const leader = top[0];
+    const categoryLabel = category ? getLocalizedCategory(category, language) : "";
     return {
       mode: "preset",
       activeKey: category ? "foodQuality" : "mostComplaints",
       title: category ? copy.insightFoodQualityTitle : copy.insightMostComplaintsTitle,
       summary: leader
         ? language === "ar"
-          ? `${leader.label} يتصدر بعدد ${leader.count} تذكرة${category ? ` ضمن ${category}` : ""}.`
+          ? `${leader.label} يتصدر بعدد ${leader.count} تذكرة${categoryLabel ? ` ضمن ${categoryLabel}` : ""}.`
           : `${leader.label} leads with ${leader.count} ticket(s)${category ? ` in ${category}` : ""}.`
         : language === "ar" ? "لا توجد بيانات كافية حاليًا." : "Not enough live data right now.",
       metrics: [
@@ -431,21 +459,22 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
         metric(copy.metricOpenTickets, relevant.filter((ticket) => ticket.status !== "Closed").length),
       ],
       items: top.map((row) => listItem(row.label, row.count, language === "ar" ? "إجمالي التذاكر" : "Total tickets")),
-      exportRows: top.map((row) => ({ Branch: row.label, Tickets: row.count, Category: category || "All" })),
+      exportRows: top.map((row) => ({ Branch: row.label, Tickets: row.count, Category: categoryLabel || category || "All" })),
     };
   };
 
   const makeTopCities = (category = "") => {
     const relevant = tickets.filter((ticket) => !category || hasMultiValue(ticket.categoryValues, category));
-    const top = countBy(relevant, (ticket) => getTicketCity(ticket), 5);
+    const top = countBy(relevant, (ticket) => ticket.cityLabel || getTicketCity(ticket), 5);
     const leader = top[0];
+    const categoryLabel = category ? getLocalizedCategory(category, language) : "";
     return {
       mode: "preset",
       activeKey: category ? "foodQualityCity" : "mostComplaintsCity",
       title: category ? copy.insightFoodQualityCityTitle : copy.insightMostComplaintsCityTitle,
       summary: leader
         ? language === "ar"
-          ? `${leader.label} هي الأعلى بعدد ${leader.count} تذكرة${category ? ` ضمن ${category}` : ""}.`
+          ? `${leader.label} هي الأعلى بعدد ${leader.count} تذكرة${categoryLabel ? ` ضمن ${categoryLabel}` : ""}.`
           : `${leader.label} leads with ${leader.count} ticket(s)${category ? ` in ${category}` : ""}.`
         : language === "ar" ? "لا توجد بيانات مدن كافية حاليًا." : "Not enough city data is available right now.",
       metrics: [
@@ -454,7 +483,7 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
         metric(copy.metricOpenTickets, relevant.filter((ticket) => ticket.status !== "Closed").length),
       ],
       items: top.map((row) => listItem(row.label, row.count, language === "ar" ? "إجمالي التذاكر" : "Total tickets")),
-      exportRows: top.map((row) => ({ City: row.label, Tickets: row.count, Category: category || "All" })),
+      exportRows: top.map((row) => ({ City: row.label, Tickets: row.count, Category: categoryLabel || category || "All" })),
     };
   };
 
@@ -480,7 +509,7 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
   }
 
   if (key === "topSource") {
-    const top = countBy(tickets, (ticket) => ticket.source, 5);
+    const top = countBy(tickets, (ticket) => ticket.sourceLabel || ticket.source, 5);
     return {
       mode: "preset",
       activeKey: key,
@@ -541,14 +570,14 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
         ? `يوجد ${near.length} تذكرة قريبة من تجاوز SLA و${overdue.length} تذكرة متأخرة حاليًا.`
         : `There are ${near.length} ticket(s) near SLA breach and ${overdue.length} overdue ticket(s) right now.`,
       metrics: [metric(copy.metricNearSla, near.length), metric(copy.metricOverdue, overdue.length)],
-      items: near.slice(0, 5).map((ticket) => listItem(`${ticket.id} — ${ticket.branch}`, ticket.priority, `${ticket.status} • ${ticket.slaRemainingText}`)),
+      items: near.slice(0, 5).map((ticket) => listItem(`${ticket.id} — ${ticket.branch}`, ticket.priorityLabel || ticket.priority, `${ticket.statusLabel || ticket.status} • ${ticket.slaRemainingText}`)),
       exportRows: [...near, ...overdue].slice(0, 20).map((ticket) => ({
         Ticket: ticket.id,
         Branch: ticket.branch,
-        Priority: ticket.priority,
-        Status: ticket.status,
+        Priority: ticket.priorityLabel || ticket.priority,
+        Status: ticket.statusLabel || ticket.status,
         Sla: ticket.slaRemainingText,
-        SlaStatus: ticket.slaComputedStatus,
+        SlaStatus: ticket.slaComputedStatusLabel || ticket.slaComputedStatus,
       })),
     };
   }
@@ -573,7 +602,7 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
 
   if (key === "highestOpenCity") {
     const open = tickets.filter((ticket) => ticket.status !== "Closed");
-    const top = countBy(open, (ticket) => getTicketCity(ticket), 5);
+    const top = countBy(open, (ticket) => ticket.cityLabel || getTicketCity(ticket), 5);
     return {
       mode: "preset",
       activeKey: key,
@@ -594,7 +623,7 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
   const high = open.filter((ticket) => ticket.priority === "High");
   const topCategory = buildMultiValueBreakdown(open, (ticket) => ticket.categoryValues, 3).rows;
   const topBranch = countBy(open, (ticket) => ticket.branch, 3);
-  const topSource = countBy(open, (ticket) => ticket.source, 3);
+    const topSource = countBy(open, (ticket) => ticket.sourceLabel || ticket.source, 3);
 
   return {
     mode: "preset",
@@ -617,11 +646,11 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
       Ticket: ticket.id,
       Branch: ticket.branch,
       Brand: ticket.brand,
-      Category: ticket.category,
-      Source: ticket.source,
-      Priority: ticket.priority,
-      Status: ticket.status,
-      SlaStatus: ticket.slaComputedStatus,
+      Category: ticket.categoryLabel || ticket.category,
+      Source: ticket.sourceLabel || ticket.source,
+      Priority: ticket.priorityLabel || ticket.priority,
+      Status: ticket.statusLabel || ticket.status,
+      SlaStatus: ticket.slaComputedStatusLabel || ticket.slaComputedStatus,
     })),
   };
 }

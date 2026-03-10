@@ -7,7 +7,7 @@ import {
   getInsightsFilteredTickets,
   insightRowsToCsv,
 } from "../../features/dashboard/dashboardUtils";
-import { CITIES } from "../../features/portal/newTicketConfig";
+import { CITIES, getLocalizedCity } from "../../features/portal/newTicketConfig";
 
 const initialFilters = { range: "30d", branch: "all", city: "all", brand: "all" };
 
@@ -43,7 +43,7 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
   const meta = `${copy.insightsUpdated} • ${copy.insightsScopeLabel}: ${[
     filters.range === "all" ? copy.insightsRangeAll : filters.range === "7d" ? copy.insightsRange7d : filters.range === "90d" ? copy.insightsRange90d : filters.range === "month" ? copy.insightsRangeMonth : copy.insightsRange30d,
     filters.branch !== "all" ? filters.branch : null,
-    filters.city !== "all" ? filters.city : null,
+    filters.city !== "all" ? getLocalizedCity(filters.city, language) : null,
     filters.brand !== "all" ? filters.brand : null,
   ].filter(Boolean).join(" • ")}`;
 
@@ -116,7 +116,7 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
             city,
             branch: current.branch === "all" || validBranches.some((branch) => branch.branch_name === current.branch) ? current.branch : "all",
           };
-        })}><option value="all">{copy.insightsAllCities}</option>{CITIES.map((city) => <option key={city} value={city}>{city}</option>)}</select></label>
+        })}><option value="all">{copy.insightsAllCities}</option>{CITIES.map((city) => <option key={city} value={city}>{getLocalizedCity(city, language)}</option>)}</select></label>
         <label className="filter-block"><span>{copy.insightsBrandLabel}</span><select value={filters.brand} onChange={(e) => setFilters((current) => ({ ...current, brand: e.target.value }))}><option value="all">{copy.insightsAllBrands}</option>{brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></label>
       </div>
 

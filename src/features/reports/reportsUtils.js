@@ -1,6 +1,6 @@
 import { fmtDate, getTicketCity, matchesTicketSearch, pad } from "../dashboard/dashboardUtils";
 import { buildMultiValueBreakdown, formatMultiValue, getUniqueMultiValues, hasMultiValue } from "../../lib/multiValue";
-import { CITIES } from "../portal/newTicketConfig";
+import { CITIES, FEEDBACK_CATEGORIES, FEEDBACK_TYPES, getLocalizedPriority, getLocalizedStatus } from "../portal/newTicketConfig";
 
 export const REPORT_TABS = ["executive", "period", "sla", "branch", "brand", "source", "category", "aging", "trend", "export"];
 
@@ -45,6 +45,78 @@ function rptMultiBreakdown(tickets, keyFn, limit = Infinity) {
   };
 }
 
+function getReportsText(language) {
+  if (language === "ar") {
+    return {
+      totalTickets: "إجمالي التذاكر",
+      openTickets: "التذاكر المفتوحة",
+      closedTickets: "التذاكر المغلقة",
+      highPriority: "أولوية عالية",
+      slaCompliance: "الالتزام بـ SLA",
+      nearSla: "قريبة من تجاوز SLA",
+      slaBreached: "متجاوزة SLA",
+      topCategory: "أعلى تصنيف",
+      topBranch: "أعلى فرع",
+      topSource: "أعلى مصدر",
+      allTicketsInScope: "إجمالي التذاكر ضمن النطاق",
+      inProgressCount: "قيد المعالجة",
+      repliedCount: "تم الرد عليها",
+      withinSla: "ضمن SLA",
+      urgentAttention: "تحتاج متابعة عاجلة",
+      atRiskTickets: "تذاكر معرضة للتجاوز",
+      exceededSla: "تذاكر تجاوزت SLA",
+      highestVolume: "أعلى حجم للشكاوى",
+      highestAffectedBranch: "الفرع الأكثر تأثرًا",
+      highestInboundChannel: "أعلى قناة استقبال",
+      totalComplaints: "إجمالي الشكاوى",
+      openActive: "المفتوحة / النشطة",
+      closed: "مغلقة",
+      highPriorityCount: "أولوية عالية",
+      withinSlaPending: "ضمن SLA / قيد المتابعة",
+      atRiskApproaching: "معرضة للتجاوز",
+      under24h: "أقل من 24 ساعة",
+      oneToThreeDays: "من يوم إلى 3 أيام",
+      threeToSevenDays: "من 3 إلى 7 أيام",
+      over7Days: "أكثر من 7 أيام",
+      weekOf: "أسبوع",
+    };
+  }
+
+  return {
+    totalTickets: "Total Tickets",
+    openTickets: "Open Tickets",
+    closedTickets: "Closed Tickets",
+    highPriority: "High Priority",
+    slaCompliance: "SLA Compliance",
+    nearSla: "Near SLA Breach",
+    slaBreached: "SLA Breached",
+    topCategory: "Top Category",
+    topBranch: "Top Branch",
+    topSource: "Top Source",
+    allTicketsInScope: "All tickets in scope",
+    inProgressCount: "in progress",
+    repliedCount: "replied",
+    withinSla: "within SLA",
+    urgentAttention: "Requires urgent attention",
+    atRiskTickets: "At-risk tickets",
+    exceededSla: "Exceeded SLA deadline",
+    highestVolume: "Highest complaint volume",
+    highestAffectedBranch: "Most affected branch",
+    highestInboundChannel: "Highest inbound channel",
+    totalComplaints: "Total Complaints",
+    openActive: "Open / Active",
+    closed: "Closed",
+    highPriorityCount: "High Priority",
+    withinSlaPending: "Within SLA / Pending",
+    atRiskApproaching: "At Risk (approaching)",
+    under24h: "Under 24 hours",
+    oneToThreeDays: "1 - 3 days",
+    threeToSevenDays: "3 - 7 days",
+    over7Days: "Over 7 days",
+    weekOf: "Week of",
+  };
+}
+
 function topKey(tickets, keyFn) {
   const sorted = rptCountBy(tickets, keyFn);
   return sorted[0] ? `${sorted[0][0]} (${sorted[0][1]})` : "--";
@@ -60,17 +132,17 @@ function periodTickets(tickets, daysAgo, windowDays) {
 export function rptTicketToRow(ticket) {
   return {
     "Ticket No": ticket.ticketNo ?? "",
-    Status: ticket.status ?? "",
-    Priority: ticket.priority ?? "",
+    Status: ticket.statusLabel ?? ticket.status ?? "",
+    Priority: ticket.priorityLabel ?? ticket.priority ?? "",
     Branch: ticket.branch ?? "",
-    City: getTicketCity(ticket),
+    City: ticket.cityLabel ?? getTicketCity(ticket),
     Brand: ticket.brand ?? "",
-    Category: formatMultiValue(ticket.categoryValues || ticket.category, ""),
-    "Sub Category": formatMultiValue(ticket.subCategoryValues || ticket.subCategory, ""),
-    Source: ticket.source ?? "",
+    Category: ticket.categoryLabel ?? formatMultiValue(ticket.categoryValues || ticket.category, ""),
+    "Sub Category": ticket.subCategoryLabel ?? formatMultiValue(ticket.subCategoryValues || ticket.subCategory, ""),
+    Source: ticket.sourceLabel ?? ticket.source ?? "",
     Customer: ticket.customerName ?? "",
     Phone: ticket.customerPhone ?? "",
-    "SLA Status": ticket.slaComputedStatus ?? "",
+    "SLA Status": ticket.slaComputedStatusLabel ?? ticket.slaComputedStatus ?? "",
     Created: fmtDate(ticket.createdAt),
     Description: (ticket.description || "").replace(/\n/g, " "),
     "Branch Reply": (ticket.branchReply || "").replace(/\n/g, " "),
@@ -100,12 +172,13 @@ export function getReportOptions(tickets, branches) {
     branches: (branches || []).map((branch) => branch.branch_name).filter(Boolean),
     branchCityByName,
     cities: [...new Set([...CITIES, ...(tickets || []).map((ticket) => getTicketCity(ticket)).filter(Boolean).filter((value) => value !== "Unspecified")])],
-    sources: [...new Set((tickets || []).map((ticket) => ticket.source).filter(Boolean).filter((value) => value !== "--"))].sort(),
-    categories: getUniqueMultiValues(tickets || [], (ticket) => ticket.categoryValues),
+    sources: FEEDBACK_TYPES,
+    categories: FEEDBACK_CATEGORIES,
   };
 }
 
-export function buildExecutiveSection(tickets) {
+export function buildExecutiveSection(tickets, language = "en") {
+  const text = getReportsText(language);
   const total = tickets.length;
   const open = tickets.filter((ticket) => ticket.status === "Open").length;
   const inProgress = tickets.filter((ticket) => ticket.status === "In Progress").length;
@@ -116,35 +189,36 @@ export function buildExecutiveSection(tickets) {
   const atRisk = tickets.filter((ticket) => ticket.slaComputedStatus === "at_risk").length;
   const slaOk = tickets.filter((ticket) => ["pending", "on_track"].includes(ticket.slaComputedStatus)).length;
   const slaCompliance = total > 0 ? Math.round((slaOk / total) * 100) : 0;
-  const topCategories = rptCountByMulti(tickets, (ticket) => ticket.categoryValues, 1);
+  const topCategories = rptCountByMulti(tickets, (ticket) => ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues, 1);
   const topCities = rptCountBy(tickets, (ticket) => {
-    const city = getTicketCity(ticket);
+    const city = ticket.cityLabel || getTicketCity(ticket);
     return city && city !== "Unspecified" ? city : null;
   }).slice(0, 6);
 
   return {
     total,
     metricsPrimary: [
-      { label: "Total Tickets", value: total, sub: "All tickets in scope" },
-      { label: "Open Tickets", value: open, sub: `${inProgress} in progress`, tone: "warn" },
-      { label: "Closed Tickets", value: closed, sub: `${replied} replied`, tone: "good" },
-      { label: "SLA Compliance", value: `${slaCompliance}%`, sub: `${slaOk} within SLA`, tone: slaCompliance >= 80 ? "good" : slaCompliance >= 60 ? "warn" : "bad" },
-      { label: "High Priority", value: high, sub: "Requires urgent attention", tone: high > 0 ? "bad" : "good" },
+      { label: text.totalTickets, value: total, sub: text.allTicketsInScope },
+      { label: text.openTickets, value: open, sub: `${inProgress} ${text.inProgressCount}`, tone: "warn" },
+      { label: text.closedTickets, value: closed, sub: `${replied} ${text.repliedCount}`, tone: "good" },
+      { label: text.slaCompliance, value: `${slaCompliance}%`, sub: `${slaOk} ${text.withinSla}`, tone: slaCompliance >= 80 ? "good" : slaCompliance >= 60 ? "warn" : "bad" },
+      { label: text.highPriority, value: high, sub: text.urgentAttention, tone: high > 0 ? "bad" : "good" },
     ],
     metricsSecondary: [
-      { label: "Near SLA Breach", value: atRisk, sub: "At-risk tickets", tone: atRisk > 0 ? "warn" : "good" },
-      { label: "SLA Breached", value: breached, sub: "Exceeded SLA deadline", tone: breached > 0 ? "bad" : "good" },
-      { label: "Top Category", value: topCategories[0] ? `${topCategories[0][0]} (${topCategories[0][1]})` : "--", sub: "Highest complaint volume" },
-      { label: "Top Branch", value: topKey(tickets, (ticket) => ticket.branch && ticket.branch !== "--" ? ticket.branch : null), sub: "Most affected branch" },
-      { label: "Top Source", value: topKey(tickets, (ticket) => ticket.source && ticket.source !== "--" ? ticket.source : null), sub: "Highest inbound channel" },
+      { label: text.nearSla, value: atRisk, sub: text.atRiskTickets, tone: atRisk > 0 ? "warn" : "good" },
+      { label: text.slaBreached, value: breached, sub: text.exceededSla, tone: breached > 0 ? "bad" : "good" },
+      { label: text.topCategory, value: topCategories[0] ? `${topCategories[0][0]} (${topCategories[0][1]})` : "--", sub: text.highestVolume },
+      { label: text.topBranch, value: topKey(tickets, (ticket) => ticket.branch && ticket.branch !== "--" ? ticket.branch : null), sub: text.highestAffectedBranch },
+      { label: text.topSource, value: topKey(tickets, (ticket) => (ticket.sourceLabel && ticket.sourceLabel !== "--" ? ticket.sourceLabel : ticket.source) || null), sub: text.highestInboundChannel },
     ],
-    statusRows: [["Open", open], ["In Progress", inProgress], ["Replied", replied], ["Closed", closed]].filter((row) => row[1] > 0),
+    statusRows: [[getLocalizedStatus("Open", language), open], [getLocalizedStatus("In Progress", language), inProgress], [getLocalizedStatus("Replied", language), replied], [getLocalizedStatus("Closed", language), closed]].filter((row) => row[1] > 0),
     cityRows: topCities,
-    priorityRows: rptCountBy(tickets, (ticket) => ticket.priority).filter(([key]) => key && key !== "--"),
+    priorityRows: rptCountBy(tickets, (ticket) => ticket.priorityLabel || getLocalizedPriority(ticket.priority, language)).filter(([key]) => key && key !== "--"),
   };
 }
 
-export function buildPeriodSection(allTickets) {
+export function buildPeriodSection(allTickets, language = "en") {
+  const text = getReportsText(language);
   const thisWeek = periodTickets(allTickets, 0, 7);
   const lastWeek = periodTickets(allTickets, 7, 7);
   const thisMonth = periodTickets(allTickets, 0, 30);
@@ -154,19 +228,20 @@ export function buildPeriodSection(allTickets) {
     const closed = (rows) => rows.filter((ticket) => ticket.status === "Closed").length;
     const breached = (rows) => rows.filter((ticket) => ticket.slaComputedStatus === "breached").length;
     const high = (rows) => rows.filter((ticket) => ticket.priority === "High").length;
-    return [["Total Complaints", current.length, previous.length], ["Open / Active", open(current), open(previous)], ["Closed", closed(current), closed(previous)], ["SLA Breached", breached(current), breached(previous)], ["High Priority", high(current), high(previous)]];
+    return [[text.totalComplaints, current.length, previous.length], [text.openActive, open(current), open(previous)], [text.closed, closed(current), closed(previous)], [text.slaBreached, breached(current), breached(previous)], [text.highPriorityCount, high(current), high(previous)]];
   };
   return {
     weekRows: statRows(thisWeek, lastWeek),
     monthRows: statRows(thisMonth, lastMonth),
-    thisWeekCategories: rptCountByMulti(thisWeek, (ticket) => ticket.categoryValues, 6),
-    lastWeekCategories: rptCountByMulti(lastWeek, (ticket) => ticket.categoryValues, 6),
+    thisWeekCategories: rptCountByMulti(thisWeek, (ticket) => ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues, 6),
+    lastWeekCategories: rptCountByMulti(lastWeek, (ticket) => ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues, 6),
     thisWeekCount: thisWeek.length,
     lastWeekCount: lastWeek.length,
   };
 }
 
-export function buildSlaSection(tickets) {
+export function buildSlaSection(tickets, language = "en") {
+  const text = getReportsText(language);
   const total = tickets.length;
   const pending = tickets.filter((ticket) => ticket.slaComputedStatus === "pending").length;
   const onTrack = tickets.filter((ticket) => ticket.slaComputedStatus === "on_track").length;
@@ -194,9 +269,9 @@ export function buildSlaSection(tickets) {
     total,
     compliance,
     statusRows: [
-      { label: "Within SLA / Pending", count: pending + onTrack, pct: total > 0 ? (((pending + onTrack) / total) * 100).toFixed(1) : 0, color: "#22c55e" },
-      { label: "At Risk (approaching)", count: atRisk, pct: total > 0 ? ((atRisk / total) * 100).toFixed(1) : 0, color: "#f59e0b" },
-      { label: "Breached", count: breached, pct: total > 0 ? ((breached / total) * 100).toFixed(1) : 0, color: "#ef4444" },
+      { label: text.withinSlaPending, count: pending + onTrack, pct: total > 0 ? (((pending + onTrack) / total) * 100).toFixed(1) : 0, color: "#22c55e" },
+      { label: text.atRiskApproaching, count: atRisk, pct: total > 0 ? ((atRisk / total) * 100).toFixed(1) : 0, color: "#f59e0b" },
+      { label: text.slaBreached, count: breached, pct: total > 0 ? ((breached / total) * 100).toFixed(1) : 0, color: "#ef4444" },
     ],
     branchRows: Object.entries(branchSla).sort((a, b) => b[1].breached - a[1].breached).slice(0, 10).map(([branch, row]) => ({ branch, total: row.total, breached: row.breached, atRisk: row.atRisk, compliance: row.total > 0 ? Math.round(((row.total - row.breached) / row.total) * 100) : 100 })),
     brandRows: Object.entries(brandSla).sort((a, b) => b[1].total - a[1].total).slice(0, 8).map(([brand, row]) => ({ brand, total: row.total, breached: row.breached, compliance: row.total > 0 ? Math.round(((row.total - row.breached) / row.total) * 100) : 100 })),
@@ -215,7 +290,7 @@ export function buildBranchSection(tickets) {
     if (ticket.status === "In Progress") row.inProgress += 1;
     if (ticket.status === "Closed") row.closed += 1;
     if (ticket.slaComputedStatus === "breached") row.breached += 1;
-    (ticket.categoryValues || []).forEach((category) => {
+    (ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues || []).forEach((category) => {
       row.categories[category] = (row.categories[category] || 0) + 1;
     });
   });
@@ -236,7 +311,7 @@ export function buildBrandSection(tickets) {
     if (ticket.status === "Open" || ticket.status === "In Progress") row.open += 1;
     if (ticket.status === "Closed") row.closed += 1;
     if (ticket.slaComputedStatus === "breached") row.breached += 1;
-    (ticket.categoryValues || []).forEach((category) => {
+    (ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues || []).forEach((category) => {
       row.categories[category] = (row.categories[category] || 0) + 1;
     });
   });
@@ -247,13 +322,13 @@ export function buildBrandSection(tickets) {
 }
 
 export function buildSourceSection(tickets) {
-  const sources = rptCountBy(tickets, (ticket) => ticket.source && ticket.source !== "--" ? ticket.source : null);
+  const sources = rptCountBy(tickets, (ticket) => ticket.sourceLabel && ticket.sourceLabel !== "--" ? ticket.sourceLabel : ticket.source || null);
   return {
     total: tickets.length,
     sources,
     topCards: sources.slice(0, 3).map(([source, count]) => {
-      const rows = tickets.filter((ticket) => ticket.source === source);
-      const categoryBreakdown = rptMultiBreakdown(rows, (ticket) => ticket.categoryValues, 5);
+      const rows = tickets.filter((ticket) => (ticket.sourceLabel || ticket.source) === source);
+      const categoryBreakdown = rptMultiBreakdown(rows, (ticket) => ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues, 5);
       return {
         source,
         count,
@@ -266,21 +341,22 @@ export function buildSourceSection(tickets) {
 }
 
 export function buildCategorySection(tickets) {
-  const mainBreakdown = rptMultiBreakdown(tickets, (ticket) => ticket.categoryValues);
-  const subBreakdown = rptMultiBreakdown(tickets, (ticket) => ticket.subCategoryValues, 10);
+  const mainBreakdown = rptMultiBreakdown(tickets, (ticket) => ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues);
+  const subBreakdown = rptMultiBreakdown(tickets, (ticket) => ticket.subCategoryLabels?.length ? ticket.subCategoryLabels : ticket.subCategoryValues, 10);
   const mainCategories = mainBreakdown.rows;
   return {
     total: mainBreakdown.total || tickets.length,
     mainCategories,
     subCategories: subBreakdown.rows,
     priorityRows: mainCategories.slice(0, 5).map(([category, total]) => {
-      const rows = tickets.filter((ticket) => hasMultiValue(ticket.categoryValues, category));
+      const rows = tickets.filter((ticket) => hasMultiValue(ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues, category));
       return { category, total, high: rows.filter((ticket) => ticket.priority === "High").length, medium: rows.filter((ticket) => ticket.priority === "Medium").length, low: rows.filter((ticket) => ticket.priority === "Low").length };
     }),
   };
 }
 
-export function buildAgingSection(tickets) {
+export function buildAgingSection(tickets, language = "en") {
+  const text = getReportsText(language);
   const now = Date.now();
   const activeTickets = tickets.filter((ticket) => ticket.status === "Open" || ticket.status === "In Progress");
   const ageHours = (ticket) => (now - ticket.createdAt) / 3600000;
@@ -288,22 +364,26 @@ export function buildAgingSection(tickets) {
   return {
     activeCount: activeTickets.length,
     buckets: [
-      { label: "Under 24 hours", count: activeTickets.filter((ticket) => bucket(ticket, 0, 24)).length, tone: "ok" },
-      { label: "1 - 3 days", count: activeTickets.filter((ticket) => bucket(ticket, 24, 72)).length, tone: "mild" },
-      { label: "3 - 7 days", count: activeTickets.filter((ticket) => bucket(ticket, 72, 168)).length, tone: "warn" },
-      { label: "Over 7 days", count: activeTickets.filter((ticket) => bucket(ticket, 168, Infinity)).length, tone: "bad" },
+      { label: text.under24h, count: activeTickets.filter((ticket) => bucket(ticket, 0, 24)).length, tone: "ok" },
+      { label: text.oneToThreeDays, count: activeTickets.filter((ticket) => bucket(ticket, 24, 72)).length, tone: "mild" },
+      { label: text.threeToSevenDays, count: activeTickets.filter((ticket) => bucket(ticket, 72, 168)).length, tone: "warn" },
+      { label: text.over7Days, count: activeTickets.filter((ticket) => bucket(ticket, 168, Infinity)).length, tone: "bad" },
     ],
     oldestRows: [...activeTickets].sort((a, b) => a.createdAt - b.createdAt).slice(0, 10).map((ticket) => {
       const hours = Math.floor(ageHours(ticket));
       const days = Math.floor(hours / 24);
-      return { ticket: ticket.id, branch: ticket.branch, priority: ticket.priority, age: days > 0 ? `${days}d ${hours % 24}h` : `${hours}h`, category: ticket.category && ticket.category !== "--" ? ticket.category : "--" };
+      const age = days > 0
+        ? language === "ar" ? `${days}ي ${hours % 24}س` : `${days}d ${hours % 24}h`
+        : language === "ar" ? `${hours}س` : `${hours}h`;
+      return { ticket: ticket.id, branch: ticket.branch, priority: ticket.priorityLabel || ticket.priority, age, category: ticket.categoryLabel && ticket.categoryLabel !== "--" ? ticket.categoryLabel : ticket.category && ticket.category !== "--" ? ticket.category : "--" };
     }),
     byBranch: rptCountBy(activeTickets, (ticket) => ticket.branch && ticket.branch !== "--" ? ticket.branch : null).slice(0, 8),
-    byCategory: rptCountByMulti(activeTickets, (ticket) => ticket.categoryValues, 8),
+    byCategory: rptCountByMulti(activeTickets, (ticket) => ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues, 8),
   };
 }
 
-export function buildTrendSection(tickets) {
+export function buildTrendSection(tickets, language = "en") {
+  const text = getReportsText(language);
   const now = Date.now();
   const days = 21;
   const bars = [];
@@ -321,19 +401,19 @@ export function buildTrendSection(tickets) {
     const end = now - week * 7 * 86400000;
     const rows = tickets.filter((ticket) => ticket.createdAt >= start && ticket.createdAt < end);
     const date = new Date(start);
-    weeklyRows.unshift({ week: `Week of ${pad(date.getMonth() + 1)}/${pad(date.getDate())}`, complaints: rows.length, breached: rows.filter((ticket) => ticket.slaComputedStatus === "breached").length });
+    weeklyRows.unshift({ week: `${text.weekOf} ${pad(date.getMonth() + 1)}/${pad(date.getDate())}`, complaints: rows.length, breached: rows.filter((ticket) => ticket.slaComputedStatus === "breached").length });
   }
   const thisWeekTickets = tickets.filter((ticket) => ticket.createdAt >= now - 7 * 86400000);
   const lastWeekTickets = tickets.filter((ticket) => ticket.createdAt >= now - 14 * 86400000 && ticket.createdAt < now - 7 * 86400000);
   const current = {};
   const previous = {};
   thisWeekTickets.forEach((ticket) => {
-    (ticket.categoryValues || []).forEach((category) => {
+    (ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues || []).forEach((category) => {
       current[category] = (current[category] || 0) + 1;
     });
   });
   lastWeekTickets.forEach((ticket) => {
-    (ticket.categoryValues || []).forEach((category) => {
+    (ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues || []).forEach((category) => {
       previous[category] = (previous[category] || 0) + 1;
     });
   });
@@ -343,7 +423,7 @@ export function buildTrendSection(tickets) {
     weeklyRows,
     risers: Object.entries(current).map(([category, count]) => ({ category, current: count, previous: previous[category] || 0, delta: count - (previous[category] || 0) })).filter((row) => row.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 5),
     thisWeekCount: thisWeekTickets.length,
-    topSources: rptCountBy(thisWeekTickets, (ticket) => ticket.source && ticket.source !== "--" ? ticket.source : null).slice(0, 6),
+    topSources: rptCountBy(thisWeekTickets, (ticket) => ticket.sourceLabel && ticket.sourceLabel !== "--" ? ticket.sourceLabel : ticket.source || null).slice(0, 6),
     topBranches: rptCountBy(thisWeekTickets, (ticket) => ticket.branch && ticket.branch !== "--" ? ticket.branch : null).slice(0, 6),
   };
 }
@@ -378,7 +458,7 @@ export function buildExportBundles(allTickets, filteredTickets) {
       if (ticket.status === "Closed") brandReport[brand].Closed += 1;
       if (ticket.slaComputedStatus === "breached") brandReport[brand].Breached += 1;
     }
-    (ticket.categoryValues || []).forEach((category) => {
+    (ticket.categoryLabels?.length ? ticket.categoryLabels : ticket.categoryValues || []).forEach((category) => {
       if (!categoryReport[category]) categoryReport[category] = { Category: category, Total: 0, High: 0, Medium: 0, Low: 0 };
       categoryReport[category].Total += 1;
       if (ticket.priority === "High") categoryReport[category].High += 1;

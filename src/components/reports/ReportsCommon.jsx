@@ -13,7 +13,8 @@ export function ReportMetricGrid({ rows }) {
 }
 
 export function ReportBreakdownRows({ entries, total, colorClass = "" }) {
-  if (!entries.length) return <div className="rptEmpty">No data for selected filters</div>;
+  const emptyText = document.documentElement.lang === "ar" ? "لا توجد بيانات للفلاتر المحددة" : "No data for selected filters";
+  if (!entries.length) return <div className="rptEmpty">{emptyText}</div>;
   const max = entries[0][1];
   return (
     <div className="rptBarRows">
@@ -34,12 +35,15 @@ export function ReportBreakdownRows({ entries, total, colorClass = "" }) {
 }
 
 export function ReportTable({ headers, rows }) {
-  if (!rows.length) return <div className="rptEmpty">No data for selected filters</div>;
+  const emptyText = document.documentElement.lang === "ar" ? "لا توجد بيانات للفلاتر المحددة" : "No data for selected filters";
+  if (!rows.length) return <div className="rptEmpty">{emptyText}</div>;
   return (
-    <table className="rptTable">
-      <thead><tr>{headers.map((header) => <th key={header}>{header}</th>)}</tr></thead>
-      <tbody>{rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={`${rowIndex}-${cellIndex}`}>{cell}</td>)}</tr>)}</tbody>
-    </table>
+    <div className="rptTableWrap">
+      <table className="rptTable">
+        <thead><tr>{headers.map((header) => <th key={header}>{header}</th>)}</tr></thead>
+        <tbody>{rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={`${rowIndex}-${cellIndex}`}>{cell}</td>)}</tr>)}</tbody>
+      </table>
+    </div>
   );
 }
 

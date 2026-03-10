@@ -57,15 +57,15 @@ export function PreferencesPanel({ settingsCopy, theme, language, setTheme, setL
         <div className="panel-card">
           <div className="panel-heading">{settingsCopy.currentTheme}</div>
           <div className="field-row">
-            <button type="button" className={`ghost-btn${theme === "dark" ? " active-chip" : ""}`} onClick={() => setTheme("dark")}>🌙 Dark</button>
-            <button type="button" className={`ghost-btn${theme === "light" ? " active-chip" : ""}`} onClick={() => setTheme("light")}>☀️ Light</button>
+            <button type="button" className={`ghost-btn${theme === "dark" ? " active-chip" : ""}`} onClick={() => setTheme("dark")}>🌙 {settingsCopy.darkTheme}</button>
+            <button type="button" className={`ghost-btn${theme === "light" ? " active-chip" : ""}`} onClick={() => setTheme("light")}>☀️ {settingsCopy.lightTheme}</button>
           </div>
         </div>
         <div className="panel-card">
           <div className="panel-heading">{settingsCopy.currentLanguage}</div>
           <div className="field-row">
-            <button type="button" className={`ghost-btn${language === "en" ? " active-chip" : ""}`} onClick={() => setLanguage("en")}>🇺🇸 English</button>
-            <button type="button" className={`ghost-btn${language === "ar" ? " active-chip" : ""}`} onClick={() => setLanguage("ar")}>🇸🇦 العربية</button>
+            <button type="button" className={`ghost-btn${language === "en" ? " active-chip" : ""}`} onClick={() => setLanguage("en")}>🇺🇸 {settingsCopy.englishLanguage}</button>
+            <button type="button" className={`ghost-btn${language === "ar" ? " active-chip" : ""}`} onClick={() => setLanguage("ar")}>🇸🇦 {settingsCopy.arabicLanguage}</button>
           </div>
         </div>
       </div>
