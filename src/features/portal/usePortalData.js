@@ -28,6 +28,17 @@ function formatResolutionActivity(payload) {
   return rows.map(([label, value]) => `${label}: ${value}`).join("\n");
 }
 
+function formatInitialActionActivity(payload) {
+  const rows = [
+    ["Was action already taken?", payload.initial_action_taken],
+    ["Initial Action Type", payload.initial_action_type],
+    ["Initial Customer Contact Status", payload.initial_customer_contact_status],
+    ["Initial Customer Satisfied", payload.initial_customer_satisfied],
+  ].filter(([, value]) => value && value !== "No");
+
+  return rows.map(([label, value]) => `${label}: ${value}`).join("\n");
+}
+
 async function fetchPortalState(language) {
   const [branchesRes, repliesRes, attachmentsRes, ticketsRes] = await Promise.all([
     supabase.from("branches").select("*").order("branch_name", { ascending: true }),
@@ -200,6 +211,18 @@ export function usePortalData(language) {
       if (error) throw error;
 
       const created = data?.[0];
+      if (created?.id && payload.initial_action_taken === "Yes") {
+        const initialActionSummary = formatInitialActionActivity(payload);
+        const { error: initialActionError } = await supabase.from("ticket_replies").insert([{
+          ticket_id: created.id,
+          reply_text: payload.initial_resolution_details || null,
+          reply_by: "Initial Customer Action",
+          action_taken: initialActionSummary || "Initial customer action recorded",
+          created_at: payload.initial_action_recorded_at || new Date().toISOString(),
+        }]);
+        if (initialActionError) throw initialActionError;
+      }
+
       if (created?.id && files.length) {
         for (const file of files) {
           const base64 = await fileToBase64(file);
@@ -265,6 +288,13 @@ export function usePortalData(language) {
               status: created.status,
               complaint_at: payload.complaint_at || null,
               complaint_display: complaintDisplay,
+              submitted_by_name: payload.created_by_name || null,
+              submitted_by_email: payload.created_by_email || null,
+              initial_action_taken: payload.initial_action_taken || "No",
+              initial_action_type: payload.initial_action_type || null,
+              initial_customer_contact_status: payload.initial_customer_contact_status || null,
+              initial_customer_satisfied: payload.initial_customer_satisfied || null,
+              initial_resolution_details: payload.initial_resolution_details || null,
               attachment_links: (attachmentRows || []).filter((row) => row.public_url).map((row) => ({ name: row.file_name, url: row.public_url })),
             }),
           });

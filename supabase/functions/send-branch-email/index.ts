@@ -53,6 +53,13 @@ serve(async (req) => {
       status,
       complaint_at,
       complaint_display,
+      submitted_by_name,
+      submitted_by_email,
+      initial_action_taken,
+      initial_action_type,
+      initial_customer_contact_status,
+      initial_customer_satisfied,
+      initial_resolution_details,
       attachment_links,
     } = body || {};
 
@@ -120,6 +127,17 @@ serve(async (req) => {
       .replaceAll("\n", "<br/>");
 
     const complaintDateTime = complaint_display || complaint_at || "-";
+    const initialActionHtml = initial_action_taken === "Yes"
+      ? `
+        <tr><td><b>Was action already taken?</b></td><td>${initial_action_taken}</td></tr>
+        <tr><td><b>Initial Action Type</b></td><td>${initial_action_type ?? "-"}</td></tr>
+        <tr><td><b>Initial Customer Contact Status</b></td><td>${initial_customer_contact_status ?? "-"}</td></tr>
+        <tr><td><b>Initial Customer Satisfied</b></td><td>${initial_customer_satisfied ?? "-"}</td></tr>
+        <tr><td><b>Initial Resolution Details</b></td><td>${(initial_resolution_details ?? "-").toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>")}</td></tr>
+      `
+      : `
+        <tr><td><b>Was action already taken?</b></td><td>No</td></tr>
+      `;
     const replyButtonHtml = reply_url
       ? `
         <div style="margin:16px 0 6px">
@@ -147,6 +165,8 @@ serve(async (req) => {
         <table cellpadding="8" cellspacing="0" border="1" style="border-collapse:collapse">
           <tr><td><b>Ticket No</b></td><td>${ticket_no ?? "-"}</td></tr>
           <tr><td><b>Branch</b></td><td>${branch_name ?? "-"}</td></tr>
+          <tr><td><b>Submitted By</b></td><td>${submitted_by_name ?? "-"}</td></tr>
+          <tr><td><b>Submitter Email</b></td><td>${submitted_by_email ?? "-"}</td></tr>
           <tr><td><b>Complaint Date & Time</b></td><td>${complaintDateTime}</td></tr>
           <tr><td><b>Customer Name</b></td><td>${customer_name ?? "-"}</td></tr>
           <tr><td><b>Customer Phone</b></td><td>${customer_phone ?? "-"}</td></tr>
@@ -156,6 +176,7 @@ serve(async (req) => {
           <tr><td><b>Priority</b></td><td>${priority ?? "-"}</td></tr>
           <tr><td><b>Status</b></td><td>${status ?? "-"}</td></tr>
           <tr><td><b>Description</b></td><td>${safeDescription}</td></tr>
+          ${initialActionHtml}
           ${attachmentLinksHtml}
         </table>
 

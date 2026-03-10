@@ -29,12 +29,25 @@ export function ticketInfoRows(ticket, labels) {
     [labels.subCategory, ticket.subCategoryLabels?.length ? ticket.subCategoryLabels : ticket.subCategoryValues?.length ? ticket.subCategoryValues : ticket.subCategoryLabel || ticket.subCategory],
     [labels.customer, ticket.customerName],
     [labels.phone, ticket.customerPhone],
+    [labels.createdBy, ticket.createdByName || "--"],
+    [labels.createdByEmail, ticket.createdByEmail || "--"],
     [labels.assigned, ticket.assignedTo || "--"],
     [labels.created, fmtDate(ticket.createdAt)],
     [labels.complaintAt, fmtDate(ticket.complaintAt)],
     [labels.sla, ticket.slaRemainingText || "--"],
     [labels.slaStatus, ticket.slaComputedStatusLabel || ticket.slaComputedStatus || "pending"],
   ];
+}
+
+function buildInitialActionSummary(ticket, copy) {
+  const rows = [
+    [copy.initialActionTakenLabel, ticket.initialActionTaken],
+    [copy.initialActionTypeLabel, ticket.initialActionType],
+    [copy.initialContactStatusLabel, ticket.initialCustomerContactStatus],
+    [copy.initialSatisfiedLabel, ticket.initialCustomerSatisfied],
+  ].filter(([, value]) => value && value !== "No");
+
+  return rows.map(([label, value]) => `${label}: ${value}`).join("\n");
 }
 
 function buildResolutionSummary(ticket, copy) {
@@ -51,11 +64,23 @@ function buildResolutionSummary(ticket, copy) {
 
 export function buildTimeline(ticket, copy) {
   if (!ticket) return [];
-  const rows = [{ t: copy.createdTimeline, d: `${copy.loadedFromDb}\n${copy.complaintDateTimeLabel}: ${fmtDate(ticket.complaintAt)}`, m: `${copy.timelineTimestampLabel}: ${fmtDate(ticket.createdAt)}` }];
+  const createdByText = ticket.createdByName && ticket.createdByName !== "--"
+    ? `\n${copy.labelCreatedBy}: ${ticket.createdByName}`
+    : "";
+  const rows = [{ t: copy.createdTimeline, d: `${copy.loadedFromDb}\n${copy.complaintDateTimeLabel}: ${fmtDate(ticket.complaintAt)}${createdByText}`, m: `${copy.timelineTimestampLabel}: ${fmtDate(ticket.createdAt)}` }];
   const replies = ticket.rawReplies || [];
   let hasResolutionEntry = false;
+  let hasInitialActionEntry = false;
+
   replies.forEach((reply) => {
     const timestamp = `${copy.timelineTimestampLabel}: ${fmtDate(reply.created_at)}`;
+
+    if (reply.reply_by === "Initial Customer Action") {
+      hasInitialActionEntry = true;
+      const details = [reply.action_taken, reply.reply_text].filter(Boolean).join("\n\n");
+      rows.push({ t: copy.initialCustomerActionTitle, d: details || copy.initialCustomerActionEmpty, m: timestamp });
+      return;
+    }
 
     if (reply.reply_by === "Customer Resolution") {
       hasResolutionEntry = true;
@@ -67,6 +92,14 @@ export function buildTimeline(ticket, copy) {
     rows.push({ t: copy.replyByBranchTimeline, d: reply.reply_text || "--", m: timestamp });
     if (reply.action_taken && reply.action_taken !== "Branch reply updated") rows.push({ t: copy.actionTakenTimeline, d: reply.action_taken, m: timestamp });
   });
+
+  if (ticket.initialActionTaken === "Yes" && ticket.initialActionRecordedAt && !hasInitialActionEntry) {
+    rows.push({
+      t: copy.initialCustomerActionTitle,
+      d: [buildInitialActionSummary(ticket, copy), ticket.initialResolutionDetails].filter(Boolean).join("\n\n") || copy.initialCustomerActionEmpty,
+      m: `${copy.timelineTimestampLabel}: ${fmtDate(ticket.initialActionRecordedAt)}`,
+    });
+  }
 
   if (ticket.resolutionUpdatedAt && !hasResolutionEntry) {
     rows.push({

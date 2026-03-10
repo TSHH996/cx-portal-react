@@ -20,6 +20,7 @@ export const STATUSES = ["Open", "In Progress", "Replied", "Closed"];
 export const RESOLUTION_ACTION_TYPES = ["Apology only", "Coupon issued", "Refund", "Replacement meal", "Escalated", "No action needed", "Other"];
 export const CUSTOMER_CONTACT_STATUSES = ["Contacted", "Not Contacted Yet", "Follow-up Pending", "Customer Unreachable", "No direct contact available (Google Review)", "Resolved before contact"];
 export const CUSTOMER_SATISFIED_OPTIONS = ["Yes", "No", "Pending"];
+export const YES_NO_OPTIONS = ["Yes", "No"];
 
 const CITY_BY_LOWERCASE = Object.fromEntries(CITIES.map((city) => [city.toLowerCase(), city]));
 

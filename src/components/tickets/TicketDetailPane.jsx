@@ -66,6 +66,7 @@ function TicketDetailPane({ copy, ticket, handledByDefault, onSaveReply, onSaveR
   }
 
   const hasReply = Boolean(ticket.branchReply);
+  const hasInitialAction = ticket.initialActionTaken === "Yes";
   const hasResolution = Boolean(
     ticket.resolutionActionType
       || ticket.customerContactStatus
@@ -135,6 +136,26 @@ function TicketDetailPane({ copy, ticket, handledByDefault, onSaveReply, onSaveR
               </div>
             </div>
           </div>
+        </article>
+
+        <article className="panel-card detail-section-card">
+          <div className="detail-section-head">
+            <div>
+              <div className="panel-heading">{copy.initialCustomerActionTitle}</div>
+              <div className="panel-note">{copy.initialCustomerActionSub}</div>
+            </div>
+            <div className="panel-note">{hasInitialAction ? `${copy.branchReplyMeta}: ${fmtDate(ticket.initialActionRecordedAt || ticket.createdAt)}` : copy.initialCustomerActionEmpty}</div>
+          </div>
+
+          {hasInitialAction ? (
+            <div className="detail-highlight-card resolution-summary-grid">
+              <div><b>{copy.initialActionTakenLabel}:</b> <bdi className="data-value">{ticket.initialActionTaken}</bdi></div>
+              <div><b>{copy.initialActionTypeLabel}:</b> <bdi className="data-value">{ticket.initialActionType || "--"}</bdi></div>
+              <div><b>{copy.initialContactStatusLabel}:</b> <bdi className="data-value">{ticket.initialCustomerContactStatus || "--"}</bdi></div>
+              <div><b>{copy.initialSatisfiedLabel}:</b> <bdi className="data-value">{ticket.initialCustomerSatisfied || "--"}</bdi></div>
+              <div className="resolution-summary-notes"><b>{copy.initialResolutionDetailsLabel}:</b> <bdi className="data-value">{ticket.initialResolutionDetails || "--"}</bdi></div>
+            </div>
+          ) : <div className="panel-note">{copy.initialCustomerActionEmpty}</div>}
         </article>
 
         <article className="panel-card detail-section-card">

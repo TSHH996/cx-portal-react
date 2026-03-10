@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { useAppShell } from "../../contexts/AppShellContext";
 import { useToast } from "../../contexts/ToastContext";
-import { BRANDS, computeSlaDueAt, getLocalizedCategory, getLocalizedCategoryOptions, getLocalizedCityOptions, getLocalizedPriorityOptions, getLocalizedSourceOptions, getLocalizedStatusOptions, getLocalizedSubCategory, getLocalizedSubCategoryOptions, resolveBranchCity, SUB_CATEGORIES } from "../../features/portal/newTicketConfig";
+import { BRANDS, computeSlaDueAt, CUSTOMER_CONTACT_STATUSES, CUSTOMER_SATISFIED_OPTIONS, getLocalizedCategoryOptions, getLocalizedCityOptions, getLocalizedPriorityOptions, getLocalizedSourceOptions, getLocalizedStatusOptions, getLocalizedSubCategoryOptions, RESOLUTION_ACTION_TYPES, resolveBranchCity, SUB_CATEGORIES, YES_NO_OPTIONS } from "../../features/portal/newTicketConfig";
 import { usePortalData } from "../../features/portal/usePortalData";
 import { joinMultiValue } from "../../lib/multiValue";
 
@@ -14,6 +15,11 @@ function initialForm(copy) {
     customer_name: copy.customerNameDefault || "Test Customer",
     customer_phone: copy.customerPhoneDefault || "0500000000",
     complaint_at: localDateTime,
+    initial_action_taken: "No",
+    initial_action_type: "",
+    initial_customer_contact_status: "",
+    initial_customer_satisfied: "",
+    initial_resolution_details: "",
     city: "",
     branch_name: "",
     brand: "",
@@ -78,6 +84,7 @@ function MultiChoiceField({ label, helper, values, options, emptyText, onToggle,
 
 function NewTicketModal() {
   const { copy, language, isNewTicketOpen, closeNewTicket } = useAppShell();
+  const { profile } = useAuth();
   const { branches, createTicket } = usePortalData(language);
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -161,6 +168,14 @@ function NewTicketModal() {
         customer_name: form.customer_name.trim() || copy.customerNameDefault || "Test Customer",
         customer_phone: form.customer_phone.trim() || copy.customerPhoneDefault || "0500000000",
         complaint_at: form.complaint_at ? new Date(form.complaint_at).toISOString() : null,
+        created_by_name: profile?.name || null,
+        created_by_email: profile?.email || null,
+        initial_action_taken: form.initial_action_taken || "No",
+        initial_action_type: form.initial_action_taken === "Yes" ? form.initial_action_type || null : null,
+        initial_customer_contact_status: form.initial_action_taken === "Yes" ? form.initial_customer_contact_status || null : null,
+        initial_customer_satisfied: form.initial_action_taken === "Yes" ? form.initial_customer_satisfied || null : null,
+        initial_resolution_details: form.initial_action_taken === "Yes" ? form.initial_resolution_details.trim() || null : null,
+        initial_action_recorded_at: form.initial_action_taken === "Yes" ? new Date().toISOString() : null,
         branch_name: form.branch_name.trim(),
         brand: form.brand.trim(),
         feedback_type: form.feedback_type.trim(),
@@ -208,6 +223,11 @@ function NewTicketModal() {
             <div className="fieldReact"><label>{copy.labelCustomerPhone || "Customer Phone"}</label><input dir="auto" value={form.customer_phone} onChange={(e) => setForm((current) => ({ ...current, customer_phone: e.target.value }))} /></div>
           </div>
 
+          <div className="grid2React">
+            <div className="fieldReact"><label>{copy.labelCreatedBy || "Created By"}</label><input dir="auto" value={profile?.name || ""} readOnly /></div>
+            <div className="fieldReact"><label>{copy.labelCreatedByEmail || "Created By Email"}</label><input dir="auto" value={profile?.email || ""} readOnly /></div>
+          </div>
+
           <div className="fieldReact full"><label>{copy.labelComplaintDateTime || "Complaint Date & Time"}</label><input dir="auto" type="datetime-local" value={form.complaint_at} onChange={(e) => setForm((current) => ({ ...current, complaint_at: e.target.value }))} placeholder={copy.optionSelectDateTime || "Select date and time"} /></div>
 
           <div className="grid2React">
@@ -245,6 +265,63 @@ function NewTicketModal() {
           </div>
 
           <div className="fieldReact full"><label>{copy.labelDescription || "Description"}</label><textarea dir="auto" value={form.description} onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))} /></div>
+
+          <article className="panel-card detail-section-card">
+            <div className="detail-section-head">
+              <div>
+                <div className="panel-heading">{copy.initialCustomerActionTitle}</div>
+                <div className="panel-note">{copy.initialCustomerActionSub}</div>
+              </div>
+            </div>
+            <div className="detail-section-stack">
+              <div className="grid2React">
+                <div className="fieldReact"><label>{copy.initialActionTakenLabel}</label><select dir="auto" value={form.initial_action_taken} onChange={(e) => setForm((current) => {
+                  const next = e.target.value;
+                  if (next === "No") {
+                    return {
+                      ...current,
+                      initial_action_taken: next,
+                      initial_action_type: "",
+                      initial_customer_contact_status: "",
+                      initial_customer_satisfied: "",
+                      initial_resolution_details: "",
+                    };
+                  }
+                  return { ...current, initial_action_taken: next };
+                })}>{YES_NO_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
+              </div>
+              {form.initial_action_taken === "Yes" ? (
+                <div className="resolution-grid">
+                  <div className="fieldReact">
+                    <label>{copy.initialActionTypeLabel}</label>
+                    <select dir="auto" value={form.initial_action_type} onChange={(e) => setForm((current) => ({ ...current, initial_action_type: e.target.value }))}>
+                      <option value="">--</option>
+                      {RESOLUTION_ACTION_TYPES.map((value) => <option key={value} value={value}>{value}</option>)}
+                    </select>
+                  </div>
+                  <div className="fieldReact">
+                    <label>{copy.initialContactStatusLabel}</label>
+                    <select dir="auto" value={form.initial_customer_contact_status} onChange={(e) => setForm((current) => ({ ...current, initial_customer_contact_status: e.target.value }))}>
+                      <option value="">--</option>
+                      {CUSTOMER_CONTACT_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}
+                    </select>
+                  </div>
+                  <div className="fieldReact">
+                    <label>{copy.initialSatisfiedLabel}</label>
+                    <select dir="auto" value={form.initial_customer_satisfied} onChange={(e) => setForm((current) => ({ ...current, initial_customer_satisfied: e.target.value }))}>
+                      <option value="">--</option>
+                      {CUSTOMER_SATISFIED_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+                    </select>
+                  </div>
+                  <div className="fieldReact full">
+                    <label>{copy.initialResolutionDetailsLabel}</label>
+                    <textarea dir="auto" value={form.initial_resolution_details} onChange={(e) => setForm((current) => ({ ...current, initial_resolution_details: e.target.value }))} placeholder={copy.initialResolutionDetailsPlaceholder} />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </article>
+
           <div className="fieldReact full"><label>{copy.labelAttachments || "Attachments"}</label><input type="file" multiple onChange={(e) => setForm((current) => ({ ...current, files: Array.from(e.target.files || []) }))} /><div className="panel-note">{form.files.length ? (copy.filesSelectedLabel || "{count} files selected").replace("{count}", form.files.length) : copy.attachmentsHelper || "Upload images, PDFs, or documents."}</div></div>
         </div>
 
