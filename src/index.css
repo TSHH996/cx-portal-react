@@ -116,6 +116,8 @@ body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82);
 }
 .search-icon { font-size: .92rem; opacity: .82; }
 .search-shell input { flex: 1; border: 0; outline: 0; background: transparent; color: var(--text); }
+.search-shell:focus-within { border-color: rgba(79,140,255,.34); box-shadow: 0 0 0 3px rgba(79,140,255,.12); }
+.search-shell input::placeholder { color: var(--muted); }
 .keycap { font-size: .7rem; padding: .26rem .5rem; }
 .dashboard-page-grid, .dashboard-main-col, .dashboard-side-col { display: grid; gap: .62rem; }
 .hero-card, .surface-card, .stat-card { padding: .8rem; }
@@ -125,11 +127,11 @@ body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82);
 
 .dashboard-filter-row { padding: 0; }
 .dashboard-filter-grid {
-  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px; padding: 12px 14px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; padding: 12px 14px;
 }
-.filter-block { display: flex; flex-direction: column; gap: 6px; grid-column: span 2; }
-.filter-block.branch-block { grid-column: span 2; }
-.filter-block.action-block { justify-content: flex-end; }
+.filter-block { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.filter-block.branch-block { min-width: min(100%, 220px); }
+.filter-block.action-block { justify-content: flex-end; align-self: end; }
 .filter-block input, .filter-block select, .lookup-row input {
   border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--text); border-radius: 11px; min-height: 40px; padding: 9px 11px; width: 100%;
 }
@@ -217,17 +219,40 @@ body[data-theme="light"] .filter-block input, body[data-theme="light"] .filter-b
 .rptPageActions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .rptFilterBar { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 1rem; }
 .rptFilterGroup { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.rptFilterGroup-date { min-width: min(100%, 172px); }
 .rptFilterLabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
-.rptDateField { position: relative; display: flex; align-items: center; min-width: min(100%, 176px); }
-.rptDateInput, .rptSelect { border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--text); padding: 8px 10px; border-radius: 10px; font-size: 12.5px; height: 36px; }
-.rptDateInput { width: 100%; min-width: 0; padding-inline-start: 12px; padding-inline-end: 40px; font-variant-numeric: tabular-nums; appearance: none; -webkit-appearance: none; color-scheme: dark; }
-.rptDateInput::-webkit-date-and-time-value { min-height: 1.2em; text-align: left; }
-.rptDateInput::-webkit-datetime-edit, .rptDateInput::-webkit-datetime-edit-fields-wrapper { padding: 0; color: inherit; }
-.rptDateInput::-webkit-calendar-picker-indicator { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.rptDateField { position: relative; min-width: min(100%, 176px); flex: 1; }
+.rptSelect, .rptDateTrigger {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  border-radius: 10px;
+  font-size: 12.5px;
+  height: 38px;
+}
+.rptDateTrigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  text-align: left;
+}
+.rptDateTrigger:focus-visible, .rptDateTrigger:hover { border-color: rgba(79,140,255,.34); outline: none; }
+.rptDateText { font-variant-numeric: tabular-nums; color: var(--text); line-height: 1; }
+.rptDateText.is-placeholder { color: var(--muted); }
+.rptDateNativeInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
 .rptDateIcon { position: absolute; inset-inline-end: 12px; width: 16px; height: 16px; color: var(--muted); pointer-events: none; display: grid; place-items: center; }
 .rptDateIcon svg { width: 100%; height: 100%; }
-body[data-theme="light"] .rptDateInput, body[data-theme="light"] .rptSelect { background: #fff; color: #131d33; }
-body[data-theme="light"] .rptDateInput { color-scheme: light; }
+body[data-theme="light"] .rptSelect, body[data-theme="light"] .rptDateTrigger { background: #fff; color: #131d33; }
 .rptNav { display: flex; gap: 4px; flex-wrap: wrap; padding: 5px; border-radius: 1rem; }
 .rptTab { border: 1px solid transparent; background: transparent; color: var(--muted); padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 .rptTab:hover { background: rgba(255,255,255,.05); color: var(--text); }
@@ -556,7 +581,7 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
 
 .smart-insights-card { display: grid; gap: 10px; min-height: 0; }
 .smart-insights-head, .insights-result-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.insights-controls-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.insights-controls-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .insights-lookup-box, .insights-result-panel { border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); border-radius: 16px; padding: 12px; }
 .lookup-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

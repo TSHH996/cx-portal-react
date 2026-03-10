@@ -7,8 +7,9 @@ import {
   getInsightsFilteredTickets,
   insightRowsToCsv,
 } from "../../features/dashboard/dashboardUtils";
+import { CITIES } from "../../features/portal/newTicketConfig";
 
-const initialFilters = { range: "30d", branch: "all", brand: "all" };
+const initialFilters = { range: "30d", branch: "all", city: "all", brand: "all" };
 
 function downloadCsv(rows, fileName) {
   const csv = insightRowsToCsv(rows);
@@ -31,12 +32,18 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
     [tickets]
   );
 
+  const branchOptions = useMemo(
+    () => (filters.city === "all" ? branches : branches.filter((branch) => branch.city === filters.city)),
+    [branches, filters.city]
+  );
+
   const scopedTickets = useMemo(() => getInsightsFilteredTickets(tickets, filters), [tickets, filters]);
   const presets = useMemo(() => getInsightPresets(copy), [copy]);
 
   const meta = `${copy.insightsUpdated} • ${copy.insightsScopeLabel}: ${[
     filters.range === "all" ? copy.insightsRangeAll : filters.range === "7d" ? copy.insightsRange7d : filters.range === "90d" ? copy.insightsRange90d : filters.range === "month" ? copy.insightsRangeMonth : copy.insightsRange30d,
     filters.branch !== "all" ? filters.branch : null,
+    filters.city !== "all" ? filters.city : null,
     filters.brand !== "all" ? filters.brand : null,
   ].filter(Boolean).join(" • ")}`;
 
@@ -100,7 +107,16 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
 
       <div className="insights-controls-grid">
         <label className="filter-block"><span>{copy.insightsRangeLabel}</span><select value={filters.range} onChange={(e) => setFilters((current) => ({ ...current, range: e.target.value }))}><option value="30d">{copy.insightsRange30d}</option><option value="7d">{copy.insightsRange7d}</option><option value="90d">{copy.insightsRange90d}</option><option value="month">{copy.insightsRangeMonth}</option><option value="all">{copy.insightsRangeAll}</option></select></label>
-        <label className="filter-block"><span>{copy.insightsBranchLabel}</span><select value={filters.branch} onChange={(e) => setFilters((current) => ({ ...current, branch: e.target.value }))}><option value="all">{copy.insightsAllBranches}</option>{branches.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select></label>
+        <label className="filter-block"><span>{copy.insightsBranchLabel}</span><select value={filters.branch} onChange={(e) => setFilters((current) => ({ ...current, branch: e.target.value }))}><option value="all">{copy.insightsAllBranches}</option>{branchOptions.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select></label>
+        <label className="filter-block"><span>{copy.insightsCityLabel}</span><select value={filters.city} onChange={(e) => setFilters((current) => {
+          const city = e.target.value;
+          const validBranches = city === "all" ? branches : branches.filter((branch) => branch.city === city);
+          return {
+            ...current,
+            city,
+            branch: current.branch === "all" || validBranches.some((branch) => branch.branch_name === current.branch) ? current.branch : "all",
+          };
+        })}><option value="all">{copy.insightsAllCities}</option>{CITIES.map((city) => <option key={city} value={city}>{city}</option>)}</select></label>
         <label className="filter-block"><span>{copy.insightsBrandLabel}</span><select value={filters.brand} onChange={(e) => setFilters((current) => ({ ...current, brand: e.target.value }))}><option value="all">{copy.insightsAllBrands}</option>{brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></label>
       </div>
 

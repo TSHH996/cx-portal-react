@@ -1,4 +1,4 @@
-import { fmtDate } from "../dashboard/dashboardUtils";
+import { fmtDate, matchesTicketSearch } from "../dashboard/dashboardUtils";
 
 export function filterTickets(tickets, filters) {
   const query = (filters.search || "").toLowerCase().trim();
@@ -7,8 +7,7 @@ export function filterTickets(tickets, filters) {
   const branchQuery = (filters.branch || "").toLowerCase().trim();
 
   return tickets.filter((ticket) => {
-    const hay = `${ticket.id} ${ticket.subject || ""} ${ticket.branch} ${ticket.city || ""} ${ticket.customerName} ${ticket.customerPhone} ${ticket.category} ${ticket.source} ${ticket.description}`.toLowerCase();
-    if (query && !hay.includes(query)) return false;
+    if (!matchesTicketSearch(ticket, query)) return false;
     if (status !== "all" && ticket.status !== status) return false;
     if (priority !== "all" && ticket.priority !== priority) return false;
     if (branchQuery && !String(ticket.branch || "").toLowerCase().includes(branchQuery)) return false;

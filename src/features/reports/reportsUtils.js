@@ -1,14 +1,16 @@
-import { fmtDate, pad } from "../dashboard/dashboardUtils";
+import { fmtDate, getTicketCity, matchesTicketSearch, pad } from "../dashboard/dashboardUtils";
 import { buildMultiValueBreakdown, formatMultiValue, getUniqueMultiValues, hasMultiValue } from "../../lib/multiValue";
+import { CITIES } from "../portal/newTicketConfig";
 
 export const REPORT_TABS = ["executive", "period", "sla", "branch", "brand", "source", "category", "aging", "trend", "export"];
 
-export const DEFAULT_REPORT_FILTERS = { dateFrom: "", dateTo: "", brand: "all", branch: "all", status: "all", source: "all", priority: "all", slaStatus: "all", category: "all" };
+export const DEFAULT_REPORT_FILTERS = { dateFrom: "", dateTo: "", brand: "all", branch: "all", city: "all", status: "all", source: "all", priority: "all", slaStatus: "all", category: "all" };
 
 export function getReportTickets(tickets, filters) {
   return (tickets || []).filter((ticket) => {
     if (filters.brand !== "all" && ticket.brand !== filters.brand) return false;
     if (filters.branch !== "all" && ticket.branch !== filters.branch) return false;
+    if (filters.city !== "all" && getTicketCity(ticket) !== filters.city) return false;
     if (filters.status !== "all" && ticket.status !== filters.status) return false;
     if (filters.source !== "all" && ticket.source !== filters.source) return false;
     if (filters.priority !== "all" && ticket.priority !== filters.priority) return false;
@@ -16,6 +18,7 @@ export function getReportTickets(tickets, filters) {
     if (filters.category !== "all" && !hasMultiValue(ticket.categoryValues, filters.category)) return false;
     if (filters.dateFrom && ticket.createdAt < new Date(filters.dateFrom).getTime()) return false;
     if (filters.dateTo && ticket.createdAt > new Date(filters.dateTo).getTime() + 86400000) return false;
+    if (!matchesTicketSearch(ticket, filters.search)) return false;
     return true;
   });
 }
@@ -60,6 +63,7 @@ export function rptTicketToRow(ticket) {
     Status: ticket.status ?? "",
     Priority: ticket.priority ?? "",
     Branch: ticket.branch ?? "",
+    City: getTicketCity(ticket),
     Brand: ticket.brand ?? "",
     Category: formatMultiValue(ticket.categoryValues || ticket.category, ""),
     "Sub Category": formatMultiValue(ticket.subCategoryValues || ticket.subCategory, ""),
@@ -90,9 +94,12 @@ export function downloadCsv(rows, filename) {
 }
 
 export function getReportOptions(tickets, branches) {
+  const branchCityByName = Object.fromEntries((branches || []).map((branch) => [branch.branch_name, branch.city || ""]));
   return {
     brands: [...new Set((tickets || []).map((ticket) => ticket.brand).filter(Boolean).filter((value) => value !== "--"))].sort(),
     branches: (branches || []).map((branch) => branch.branch_name).filter(Boolean),
+    branchCityByName,
+    cities: [...new Set([...CITIES, ...(tickets || []).map((ticket) => getTicketCity(ticket)).filter(Boolean).filter((value) => value !== "Unspecified")])],
     sources: [...new Set((tickets || []).map((ticket) => ticket.source).filter(Boolean).filter((value) => value !== "--"))].sort(),
     categories: getUniqueMultiValues(tickets || [], (ticket) => ticket.categoryValues),
   };
@@ -110,6 +117,10 @@ export function buildExecutiveSection(tickets) {
   const slaOk = tickets.filter((ticket) => ["pending", "on_track"].includes(ticket.slaComputedStatus)).length;
   const slaCompliance = total > 0 ? Math.round((slaOk / total) * 100) : 0;
   const topCategories = rptCountByMulti(tickets, (ticket) => ticket.categoryValues, 1);
+  const topCities = rptCountBy(tickets, (ticket) => {
+    const city = getTicketCity(ticket);
+    return city && city !== "Unspecified" ? city : null;
+  }).slice(0, 6);
 
   return {
     total,
@@ -128,6 +139,7 @@ export function buildExecutiveSection(tickets) {
       { label: "Top Source", value: topKey(tickets, (ticket) => ticket.source && ticket.source !== "--" ? ticket.source : null), sub: "Highest inbound channel" },
     ],
     statusRows: [["Open", open], ["In Progress", inProgress], ["Replied", replied], ["Closed", closed]].filter((row) => row[1] > 0),
+    cityRows: topCities,
     priorityRows: rptCountBy(tickets, (ticket) => ticket.priority).filter(([key]) => key && key !== "--"),
   };
 }

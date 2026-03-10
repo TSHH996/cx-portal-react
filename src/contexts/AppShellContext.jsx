@@ -21,6 +21,7 @@ export function AppShellProvider({ children }) {
   const [language, setLanguage] = useState(getInitialLanguage);
   const [brandTitle, setBrandTitle] = useState(getInitialBrandTitle);
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const direction = language === "ar" ? "rtl" : "ltr";
   const copy = copyByLanguage[language] || copyByLanguage.en;
@@ -56,8 +57,11 @@ export function AppShellProvider({ children }) {
       openNewTicket: () => setIsNewTicketOpen(true),
       closeNewTicket: () => setIsNewTicketOpen(false),
       isNewTicketOpen,
+      searchQuery,
+      setSearchQuery,
+      clearSearchQuery: () => setSearchQuery(""),
     }),
-    [theme, language, direction, brandTitle, copy, isNewTicketOpen]
+    [theme, language, direction, brandTitle, copy, isNewTicketOpen, searchQuery]
   );
 
   return <AppShellContext.Provider value={value}>{children}</AppShellContext.Provider>;

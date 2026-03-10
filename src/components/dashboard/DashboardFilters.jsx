@@ -1,4 +1,4 @@
-function DashboardFilters({ copy, filters, brandOptions, onChange, onReset }) {
+function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, onReset }) {
   return (
     <section className="surface-card dashboard-filter-row">
       <div className="dashboard-filter-grid">
@@ -28,6 +28,14 @@ function DashboardFilters({ copy, filters, brandOptions, onChange, onReset }) {
           <select value={filters.brand} onChange={(e) => onChange("brand", e.target.value)}>
             <option value="all">{copy.insightsAllBrands}</option>
             {brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+          </select>
+        </label>
+
+        <label className="filter-block">
+          <span>{copy.dashboardFilterCity}</span>
+          <select value={filters.city} onChange={(e) => onChange("city", e.target.value)}>
+            <option value="all">{copy.insightsAllCities}</option>
+            {cityOptions.map((city) => <option key={city} value={city}>{city}</option>)}
           </select>
         </label>
 

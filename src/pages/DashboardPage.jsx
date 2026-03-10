@@ -9,19 +9,20 @@ import SmartInsightsPanel from "../components/dashboard/SmartInsightsPanel";
 import TrendCard from "../components/dashboard/TrendCard";
 import { useAppShell } from "../contexts/AppShellContext";
 import { buildDashboardMetrics, buildOperationalAlerts, buildRecentActivity, buildVolumeBars, filterDashboardTickets, getDashboardCollections } from "../features/dashboard/dashboardUtils";
+import { CITIES } from "../features/portal/newTicketConfig";
 import { usePortalData } from "../features/portal/usePortalData";
 
 function DashboardPage() {
-  const { copy, language } = useAppShell();
+  const { copy, language, searchQuery } = useAppShell();
   const { tickets, branches, repliesByTicketId, loading, error } = usePortalData(language);
-  const [filters, setFilters] = useState({ range: "7d", status: "all", brand: "all", priority: "all", branchQuery: "" });
+  const [filters, setFilters] = useState({ range: "7d", status: "all", brand: "all", city: "all", priority: "all", branchQuery: "" });
 
   const brandOptions = useMemo(
     () => [...new Set(tickets.map((ticket) => ticket.brand).filter(Boolean).filter((value) => value !== "--"))].sort(),
     [tickets]
   );
 
-  const filteredTickets = useMemo(() => filterDashboardTickets(tickets, filters), [tickets, filters]);
+  const filteredTickets = useMemo(() => filterDashboardTickets(tickets, { ...filters, search: searchQuery }), [tickets, filters, searchQuery]);
   const metrics = useMemo(() => buildDashboardMetrics(filteredTickets, language), [filteredTickets, language]);
   const collections = useMemo(() => getDashboardCollections(filteredTickets), [filteredTickets]);
   const alerts = useMemo(() => buildOperationalAlerts(filteredTickets, language), [filteredTickets, language]);
@@ -53,8 +54,9 @@ function DashboardPage() {
         copy={copy}
         filters={filters}
         brandOptions={brandOptions}
+        cityOptions={CITIES}
         onChange={(key, value) => setFilters((current) => ({ ...current, [key]: value }))}
-        onReset={() => setFilters({ range: "7d", status: "all", brand: "all", priority: "all", branchQuery: "" })}
+        onReset={() => setFilters({ range: "7d", status: "all", brand: "all", city: "all", priority: "all", branchQuery: "" })}
       />
 
       <KpiGrid metrics={metrics} />

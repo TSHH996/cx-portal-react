@@ -20,6 +20,43 @@ export function getTicketCity(ticket) {
   return ticket?.city || raw.city || raw.branch_city || raw.city_name || raw.branch_city_name || "Unspecified";
 }
 
+export function matchesTicketSearch(ticket, query) {
+  const term = String(query || "").trim().toLowerCase();
+  if (!term) return true;
+
+  const raw = ticket?.raw || {};
+  const haystack = [
+    ticket.id,
+    ticket.ticketNo,
+    ticket.subject,
+    ticket.status,
+    ticket.priority,
+    ticket.branch,
+    ticket.city,
+    ticket.brand,
+    ticket.category,
+    ticket.subCategory,
+    ticket.source,
+    ticket.customerName,
+    ticket.customerPhone,
+    ticket.description,
+    raw.ticket_no,
+    raw.branch_name,
+    raw.customer_name,
+    raw.customer_phone,
+    raw.description,
+    raw.feedback_category,
+    raw.sub_category,
+    raw.feedback_type,
+    raw.city,
+    raw.branch_city,
+    raw.city_name,
+    raw.branch_city_name,
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  return haystack.includes(term);
+}
+
 export function countBy(items, keyGetter, limit = 6) {
   const bucket = {};
   items.forEach((item) => {
@@ -106,6 +143,8 @@ export function filterDashboardTickets(tickets, filters) {
   const status = filters.status || "all";
   const priority = filters.priority || "all";
   const brand = filters.brand || "all";
+  const city = filters.city || "all";
+  const search = filters.search || "";
   const query = (filters.branchQuery || "").toLowerCase().trim();
   const now = Date.now();
   let list = [...tickets];
@@ -121,6 +160,7 @@ export function filterDashboardTickets(tickets, filters) {
   if (status !== "all") list = list.filter((ticket) => ticket.status === status);
   if (priority !== "all") list = list.filter((ticket) => ticket.priority === priority);
   if (brand !== "all") list = list.filter((ticket) => ticket.brand === brand);
+  if (city !== "all") list = list.filter((ticket) => getTicketCity(ticket) === city);
   if (query) {
     list = list.filter((ticket) => {
       const branch = String(ticket.branch || "").toLowerCase();
@@ -128,6 +168,7 @@ export function filterDashboardTickets(tickets, filters) {
       return branch.includes(query) || city.includes(query);
     });
   }
+  if (search) list = list.filter((ticket) => matchesTicketSearch(ticket, search));
 
   return list;
 }
@@ -257,12 +298,15 @@ export function getDashboardCollections(filteredTickets) {
 export function getInsightPresets(copy) {
   return [
     { key: "mostComplaints", title: copy.insightMostComplaintsTitle, sub: copy.insightMostComplaintsSub },
+    { key: "mostComplaintsCity", title: copy.insightMostComplaintsCityTitle, sub: copy.insightMostComplaintsCitySub },
     { key: "foodQuality", title: copy.insightFoodQualityTitle, sub: copy.insightFoodQualitySub },
+    { key: "foodQualityCity", title: copy.insightFoodQualityCityTitle, sub: copy.insightFoodQualityCitySub },
     { key: "topCategories", title: copy.insightTopCategoriesTitle, sub: copy.insightTopCategoriesSub },
     { key: "topSource", title: copy.insightTopSourceTitle, sub: copy.insightTopSourceSub },
     { key: "slowestReply", title: copy.insightSlowestReplyTitle, sub: copy.insightSlowestReplySub },
     { key: "nearSla", title: copy.insightNearSlaTitle, sub: copy.insightNearSlaSub },
     { key: "highestOpen", title: copy.insightHighestOpenTitle, sub: copy.insightHighestOpenSub },
+    { key: "highestOpenCity", title: copy.insightHighestOpenCityTitle, sub: copy.insightHighestOpenCitySub },
     { key: "biggestIssues", title: copy.insightBiggestIssuesTitle, sub: copy.insightBiggestIssuesSub },
   ];
 }
@@ -285,6 +329,7 @@ export function getInsightsFilteredTickets(tickets, filters) {
 
   if (filters.branch !== "all") list = list.filter((ticket) => ticket.branch === filters.branch);
   if (filters.brand !== "all") list = list.filter((ticket) => ticket.brand === filters.brand);
+  if (filters.city !== "all") list = list.filter((ticket) => getTicketCity(ticket) === filters.city);
   return list;
 }
 
@@ -390,8 +435,33 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
     };
   };
 
+  const makeTopCities = (category = "") => {
+    const relevant = tickets.filter((ticket) => !category || hasMultiValue(ticket.categoryValues, category));
+    const top = countBy(relevant, (ticket) => getTicketCity(ticket), 5);
+    const leader = top[0];
+    return {
+      mode: "preset",
+      activeKey: category ? "foodQualityCity" : "mostComplaintsCity",
+      title: category ? copy.insightFoodQualityCityTitle : copy.insightMostComplaintsCityTitle,
+      summary: leader
+        ? language === "ar"
+          ? `${leader.label} هي الأعلى بعدد ${leader.count} تذكرة${category ? ` ضمن ${category}` : ""}.`
+          : `${leader.label} leads with ${leader.count} ticket(s)${category ? ` in ${category}` : ""}.`
+        : language === "ar" ? "لا توجد بيانات مدن كافية حاليًا." : "Not enough city data is available right now.",
+      metrics: [
+        metric(copy.metricCities, top.length),
+        metric(copy.metricTotalTickets, relevant.length),
+        metric(copy.metricOpenTickets, relevant.filter((ticket) => ticket.status !== "Closed").length),
+      ],
+      items: top.map((row) => listItem(row.label, row.count, language === "ar" ? "إجمالي التذاكر" : "Total tickets")),
+      exportRows: top.map((row) => ({ City: row.label, Tickets: row.count, Category: category || "All" })),
+    };
+  };
+
   if (key === "mostComplaints") return makeMostComplaints();
+  if (key === "mostComplaintsCity") return makeTopCities();
   if (key === "foodQuality") return makeMostComplaints("Food Quality");
+  if (key === "foodQualityCity") return makeTopCities("Food Quality");
   if (key === "topCategories") {
     const top = buildMultiValueBreakdown(tickets, (ticket) => ticket.categoryValues, 5).rows;
     return {
@@ -498,6 +568,24 @@ export function buildInsightResult(key, tickets, repliesByTicketId, copy, langua
       metrics: [metric(copy.metricOpenTickets, open.length), metric(copy.metricBranches, top.length)],
       items: top.map((row) => listItem(row.label, row.count, language === "ar" ? "تذاكر مفتوحة" : "open tickets")),
       exportRows: top.map((row) => ({ Branch: row.label, OpenTickets: row.count })),
+    };
+  }
+
+  if (key === "highestOpenCity") {
+    const open = tickets.filter((ticket) => ticket.status !== "Closed");
+    const top = countBy(open, (ticket) => getTicketCity(ticket), 5);
+    return {
+      mode: "preset",
+      activeKey: key,
+      title: copy.insightHighestOpenCityTitle,
+      summary: top[0]
+        ? language === "ar"
+          ? `${top[0].label} لديها أعلى رصيد مفتوح بعدد ${top[0].count} تذكرة.`
+          : `${top[0].label} has the highest open backlog with ${top[0].count} ticket(s).`
+        : language === "ar" ? "لا توجد تذاكر مفتوحة على مستوى المدن حاليًا." : "There are no open city backlogs right now.",
+      metrics: [metric(copy.metricOpenTickets, open.length), metric(copy.metricCities, top.length)],
+      items: top.map((row) => listItem(row.label, row.count, language === "ar" ? "تذاكر مفتوحة" : "open tickets")),
+      exportRows: top.map((row) => ({ City: row.label, OpenTickets: row.count })),
     };
   }
 

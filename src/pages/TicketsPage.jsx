@@ -8,14 +8,14 @@ import { usePortalData } from "../features/portal/usePortalData";
 import { filterTickets } from "../features/tickets/ticketUtils";
 
 function TicketsPage() {
-  const { language, copy } = useAppShell();
+  const { language, copy, searchQuery, setSearchQuery } = useAppShell();
   const { showToast } = useToast();
   const { tickets, loading, error, saveReply, markReplied, closeTicket } = usePortalData(language);
-  const [filters, setFilters] = useState({ search: "", status: "all", priority: "all", branch: "" });
+  const [filters, setFilters] = useState({ status: "all", priority: "all", branch: "" });
   const [selectedId, setSelectedId] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const filteredTickets = useMemo(() => filterTickets(tickets, filters), [tickets, filters]);
+  const filteredTickets = useMemo(() => filterTickets(tickets, { ...filters, search: searchQuery }), [tickets, filters, searchQuery]);
   useEffect(() => {
     if (!selectedId && filteredTickets[0]?.rowId) setSelectedId(filteredTickets[0].rowId);
     if (selectedId && !tickets.find((ticket) => ticket.rowId === selectedId)) setSelectedId(filteredTickets[0]?.rowId || tickets[0]?.rowId || null);
@@ -44,9 +44,15 @@ function TicketsPage() {
     <div className="tickets-page-grid">
       <TicketsFiltersSidebar
         copy={copy}
-        filters={filters}
+        filters={{ ...filters, search: searchQuery }}
         resultCount={filteredTickets.length}
-        onChange={(key, value) => setFilters((current) => ({ ...current, [key]: value }))}
+        onChange={(key, value) => {
+          if (key === "search") {
+            setSearchQuery(value);
+            return;
+          }
+          setFilters((current) => ({ ...current, [key]: value }));
+        }}
       />
       <TicketsListPane copy={copy} tickets={filteredTickets} selectedId={selectedTicket?.rowId} onSelect={setSelectedId} />
       <TicketDetailPane

@@ -1,7 +1,28 @@
+import { useEffect, useRef } from "react";
 import { useAppShell } from "../../contexts/AppShellContext";
 
 function Topbar({ title, subtitle }) {
-  const { copy, brandTitle } = useAppShell();
+  const { copy, brandTitle, searchQuery, setSearchQuery, clearSearchQuery } = useAppShell();
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      const isShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
+      if (isShortcut) {
+        event.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+
+      if (event.key === "Escape" && document.activeElement === inputRef.current) {
+        clearSearchQuery();
+        inputRef.current?.blur();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [clearSearchQuery]);
 
   return (
     <header className="topbar-shell">
@@ -18,7 +39,7 @@ function Topbar({ title, subtitle }) {
       <div className="topbar-actions">
         <div className="search-shell">
           <span className="search-icon">🔎</span>
-          <input type="text" placeholder={copy.searchPlaceholder} disabled />
+          <input ref={inputRef} type="text" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={copy.searchPlaceholder} aria-label={copy.searchPlaceholder} />
           <span className="keycap">Ctrl/⌘ K</span>
         </div>
         <button type="button" className="ghost-btn">🔄 {copy.refresh}</button>

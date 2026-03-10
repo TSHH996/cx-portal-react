@@ -18,12 +18,12 @@ function deltaBadge(current, previous, higherIsBad = true) {
 }
 
 function ReportsPage() {
-  const { copy, language } = useAppShell();
+  const { copy, language, searchQuery } = useAppShell();
   const { tickets, branches, loading, error } = usePortalData(language);
   const [filters, setFilters] = useState(DEFAULT_REPORT_FILTERS);
   const [tab, setTab] = useState("executive");
 
-  const filteredTickets = useMemo(() => getReportTickets(tickets, filters), [tickets, filters]);
+  const filteredTickets = useMemo(() => getReportTickets(tickets, { ...filters, search: searchQuery }), [tickets, filters, searchQuery]);
   const options = useMemo(() => getReportOptions(tickets, branches), [tickets, branches]);
   const executive = useMemo(() => buildExecutiveSection(filteredTickets), [filteredTickets]);
   const period = useMemo(() => buildPeriodSection(tickets), [tickets]);
@@ -36,6 +36,24 @@ function ReportsPage() {
   const trend = useMemo(() => buildTrendSection(filteredTickets), [filteredTickets]);
   const bundles = useMemo(() => buildExportBundles(tickets, filteredTickets), [tickets, filteredTickets]);
 
+  const handleFilterChange = (key, value) => {
+    setFilters((current) => {
+      if (key === "city") {
+        const validBranches = value === "all"
+          ? options.branches
+          : options.branches.filter((branch) => options.branchCityByName?.[branch] === value);
+
+        return {
+          ...current,
+          city: value,
+          branch: current.branch === "all" || validBranches.includes(current.branch) ? current.branch : "all",
+        };
+      }
+
+      return { ...current, [key]: value };
+    });
+  };
+
   const renderSection = () => {
     if (loading) return <div className="rptLoading">{copy.dashboardLoading}</div>;
     if (error) return <div className="rptLoading">{copy.ticketLoadError}: {error}</div>;
@@ -46,12 +64,15 @@ function ReportsPage() {
           <div className="rptSectionTitle">{copy.rptTabExecutive}</div>
           <ReportMetricGrid rows={executive.metricsPrimary} />
           <ReportMetricGrid rows={executive.metricsSecondary} />
-          <div className="rptGrid2">
+          <div className="rptGrid3">
             <ReportCard title="Ticket Status Distribution" meta={`${executive.total} total`}>
               <ReportBreakdownRows entries={executive.statusRows} total={executive.total} />
             </ReportCard>
             <ReportCard title="Priority Breakdown" meta={`${executive.total} total`}>
               <ReportBreakdownRows entries={executive.priorityRows} total={executive.total} colorClass="bar-warn" />
+            </ReportCard>
+            <ReportCard title="Complaint Volume by City" meta={`${executive.cityRows.length} active cities`}>
+              <ReportBreakdownRows entries={executive.cityRows} total={executive.total} colorClass="bar-blue" />
             </ReportCard>
           </div>
         </div>
@@ -141,7 +162,7 @@ function ReportsPage() {
       { label: "Brand Report", rows: bundles.brandReport, file: "cx-brand-report.csv" },
       { label: "Category Report", rows: bundles.categoryReport, file: "cx-category-report.csv" },
     ];
-    return <div className="rptSection"><div className="rptSectionTitle">{copy.rptTabExport}</div><ReportCard title="Export Options" meta="CSV format — UTF-8 with BOM for Excel compatibility"><div className="rptExportGrid">{exportButtons.map((button) => <button key={button.file} type="button" className="rptExportBtn" onClick={() => downloadCsv(button.rows, button.file)}><div className="rptExportBtnTitle">{button.label}</div><div className="rptExportBtnSub">{button.rows.length} rows</div></button>)}</div></ReportCard><ReportCard title="Data Preview - Current Filter Scope" meta={`${filteredTickets.length} tickets`}><ReportTable headers={["Ticket", "Status", "Priority", "Branch", "Brand", "Category", "Source", "Created"]} rows={filteredTickets.slice(0, 15).map((ticket) => [ticket.id, ticket.status, ticket.priority, ticket.branch, ticket.brand, ticket.category, ticket.source, rptTicketToRow(ticket).Created])} /></ReportCard></div>;
+    return <div className="rptSection"><div className="rptSectionTitle">{copy.rptTabExport}</div><ReportCard title="Export Options" meta="CSV format — UTF-8 with BOM for Excel compatibility"><div className="rptExportGrid">{exportButtons.map((button) => <button key={button.file} type="button" className="rptExportBtn" onClick={() => downloadCsv(button.rows, button.file)}><div className="rptExportBtnTitle">{button.label}</div><div className="rptExportBtnSub">{button.rows.length} rows</div></button>)}</div></ReportCard><ReportCard title="Data Preview - Current Filter Scope" meta={`${filteredTickets.length} tickets`}><ReportTable headers={["Ticket", "Status", "Priority", "Branch", "City", "Brand", "Category", "Source", "Created"]} rows={filteredTickets.slice(0, 15).map((ticket) => [ticket.id, ticket.status, ticket.priority, ticket.branch, ticket.city, ticket.brand, ticket.category, ticket.source, rptTicketToRow(ticket).Created])} /></ReportCard></div>;
   };
 
   return (
@@ -156,7 +177,7 @@ function ReportsPage() {
           <button type="button" className="ghost-btn" onClick={() => downloadCsv(filteredTickets.map(rptTicketToRow), "cx-filtered-report.csv")}>⬇ {copy.export}</button>
         </div>
       </div>
-      <ReportsFiltersBar copy={copy} filters={filters} options={options} onChange={(key, value) => setFilters((current) => ({ ...current, [key]: value }))} onReset={() => setFilters(DEFAULT_REPORT_FILTERS)} onQuickExport={() => downloadCsv(filteredTickets.map(rptTicketToRow), "cx-filtered-report.csv")} />
+      <ReportsFiltersBar copy={copy} filters={filters} options={options} onChange={handleFilterChange} onReset={() => setFilters(DEFAULT_REPORT_FILTERS)} onQuickExport={() => downloadCsv(filteredTickets.map(rptTicketToRow), "cx-filtered-report.csv")} />
       <ReportsTabs copy={copy} activeTab={tab} onSelect={setTab} />
       <div className="rptContent">{renderSection()}</div>
     </div>
