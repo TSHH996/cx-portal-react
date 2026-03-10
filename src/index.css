@@ -63,6 +63,8 @@ html[lang="ar"] select {
 }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
+.data-value { unicode-bidi: plaintext; }
+input[dir="auto"], textarea[dir="auto"], select[dir="auto"] { unicode-bidi: plaintext; }
 
 .app-shell { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100vh; }
 .sidebar-shell {
@@ -141,6 +143,10 @@ body[data-theme="light"] .sidebar-shell { background: rgba(255, 255, 255, 0.82);
   letter-spacing: 0;
   text-transform: none;
 }
+[dir="rtl"] input[dir="auto"],
+[dir="rtl"] textarea[dir="auto"],
+[dir="rtl"] select[dir="auto"],
+[dir="rtl"] .data-value { text-align: start; }
 .dashboard-page-grid, .dashboard-main-col, .dashboard-side-col { display: grid; gap: .62rem; }
 .hero-card, .surface-card, .stat-card { padding: .8rem; }
 .hero-card { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -651,7 +657,7 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
 [dir="rtl"] .filter-block span { text-align: right; }
 [dir="rtl"] .lookup-row { grid-template-columns: auto minmax(0, 1fr); }
 [dir="rtl"] .modalHeadReact, [dir="rtl"] .modalBodyReact, [dir="rtl"] .grid2React, [dir="rtl"] .modalActionsReact { direction: rtl; }
-[dir="rtl"] .modalTitleReact, [dir="rtl"] .modalSubReact, [dir="rtl"] .fieldReact input, [dir="rtl"] .fieldReact select, [dir="rtl"] .fieldReact textarea { text-align: right; }
+[dir="rtl"] .modalTitleReact, [dir="rtl"] .modalSubReact, [dir="rtl"] .fieldReact input:not([dir="auto"]), [dir="rtl"] .fieldReact select:not([dir="auto"]), [dir="rtl"] .fieldReact textarea:not([dir="auto"]) { text-align: right; }
 [dir="rtl"] .rptPageHeader, [dir="rtl"] .rptCardHead, [dir="rtl"] .rptFilterBar, [dir="rtl"] .rptBarRow, [dir="rtl"] .rptNav { direction: rtl; }
 [dir="rtl"] .rptDateTrigger { text-align: start; }
 [dir="rtl"] .rptBarLabel { white-space: normal; overflow: visible; text-overflow: clip; }
@@ -666,7 +672,7 @@ body[data-theme="light"] .multiPickField { background: #f8fbff; }
 [dir="rtl"] .loginInput { text-align: right; }
 [dir="rtl"] .replyHeader, [dir="rtl"] .replyGridRow { direction: rtl; }
 [dir="rtl"] .replyHeaderText, [dir="rtl"] .replyCard, [dir="rtl"] .replyCard label, [dir="rtl"] .replyHint, [dir="rtl"] .replySub { text-align: right; }
-[dir="rtl"] .replyCard input, [dir="rtl"] .replyCard textarea, [dir="rtl"] .replyCard select { text-align: right; }
+[dir="rtl"] .replyCard input:not([dir="auto"]), [dir="rtl"] .replyCard textarea:not([dir="auto"]), [dir="rtl"] .replyCard select:not([dir="auto"]) { text-align: right; }
 [dir="rtl"] .rptTabExport { margin-left: 0; margin-right: auto; }
 [dir="rtl"] .rptSectionTitle::after { display: none; }
 [dir="rtl"] .rptSectionTitle::before { content: ""; flex: 1; height: 1px; background: var(--line); }

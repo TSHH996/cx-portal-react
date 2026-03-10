@@ -23,10 +23,10 @@ export function ReportBreakdownRows({ entries, total, colorClass = "" }) {
         const width = max > 0 ? ((count / max) * 100).toFixed(1) : 0;
         return (
           <div key={label} className="rptBarRow">
-            <div className="rptBarLabel" title={label}>{label}</div>
+            <div className="rptBarLabel" title={label}><bdi className="data-value">{label}</bdi></div>
             <div className="rptBarTrack"><div className={`rptBar ${colorClass}`} style={{ width: `${width}%` }} /></div>
-            <div className="rptBarCount">{count}</div>
-            <div className="rptBarPct">{pct}%</div>
+            <div className="rptBarCount"><bdi className="data-value">{count}</bdi></div>
+            <div className="rptBarPct"><bdi className="data-value">{pct}%</bdi></div>
           </div>
         );
       })}
@@ -41,7 +41,7 @@ export function ReportTable({ headers, rows }) {
     <div className="rptTableWrap">
       <table className="rptTable">
         <thead><tr>{headers.map((header) => <th key={header}>{header}</th>)}</tr></thead>
-        <tbody>{rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={`${rowIndex}-${cellIndex}`}>{cell}</td>)}</tr>)}</tbody>
+        <tbody>{rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={`${rowIndex}-${cellIndex}`}>{typeof cell === "string" || typeof cell === "number" ? <bdi className="data-value">{cell}</bdi> : cell}</td>)}</tr>)}</tbody>
       </table>
     </div>
   );

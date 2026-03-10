@@ -16,18 +16,18 @@ function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, 
 
         <label className="filter-block">
           <span>{copy.dashboardFilterStatus}</span>
-          <select value={filters.status} onChange={(e) => onChange("status", e.target.value)}>
+          <select dir="auto" value={filters.status} onChange={(e) => onChange("status", e.target.value)}>
             <option value="all">{copy.dashboardStatusAll}</option>
-            <option value="Open">{copy.filterOpen}</option>
-            <option value="In Progress">{copy.filterInProgress}</option>
-            <option value="Replied">{copy.filterReplied}</option>
-            <option value="Closed">{copy.filterClosed}</option>
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Replied">Replied</option>
+            <option value="Closed">Closed</option>
           </select>
         </label>
 
         <label className="filter-block">
           <span>{copy.dashboardFilterBrand}</span>
-          <select value={filters.brand} onChange={(e) => onChange("brand", e.target.value)}>
+          <select dir="auto" value={filters.brand} onChange={(e) => onChange("brand", e.target.value)}>
             <option value="all">{copy.insightsAllBrands}</option>
             {brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
           </select>
@@ -35,7 +35,7 @@ function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, 
 
         <label className="filter-block">
           <span>{copy.dashboardFilterCity}</span>
-          <select value={filters.city} onChange={(e) => onChange("city", e.target.value)}>
+          <select dir="auto" value={filters.city} onChange={(e) => onChange("city", e.target.value)}>
             <option value="all">{copy.insightsAllCities}</option>
             {cityOptions.map((city) => <option key={city} value={city}>{getLocalizedCity(city, document.documentElement.lang)}</option>)}
           </select>
@@ -43,17 +43,17 @@ function DashboardFilters({ copy, filters, brandOptions, cityOptions, onChange, 
 
         <label className="filter-block">
           <span>{copy.dashboardFilterPriority}</span>
-          <select value={filters.priority} onChange={(e) => onChange("priority", e.target.value)}>
+          <select dir="auto" value={filters.priority} onChange={(e) => onChange("priority", e.target.value)}>
             <option value="all">{copy.dashboardPriorityAll}</option>
-            <option value="High">{copy.filterHigh}</option>
-            <option value="Medium">{copy.filterMedium}</option>
-            <option value="Low">{copy.filterLow}</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
           </select>
         </label>
 
         <label className="filter-block branch-block">
           <span>{copy.dashboardFilterBranch}</span>
-          <input value={filters.branchQuery} onChange={(e) => onChange("branchQuery", e.target.value)} placeholder={copy.dashboardBranchPlaceholder} />
+          <input dir="auto" value={filters.branchQuery} onChange={(e) => onChange("branchQuery", e.target.value)} placeholder={copy.dashboardBranchPlaceholder} />
         </label>
 
         <div className="filter-block action-block">

@@ -193,23 +193,23 @@ function NewTicketModal() {
 
         <div className="modalBodyReact">
           <div className="grid2React">
-            <div className="fieldReact"><label>{copy.labelCustomerName || "Customer Name"}</label><input value={form.customer_name} onChange={(e) => setForm((current) => ({ ...current, customer_name: e.target.value }))} /></div>
-            <div className="fieldReact"><label>{copy.labelCustomerPhone || "Customer Phone"}</label><input value={form.customer_phone} onChange={(e) => setForm((current) => ({ ...current, customer_phone: e.target.value }))} /></div>
+            <div className="fieldReact"><label>{copy.labelCustomerName || "Customer Name"}</label><input dir="auto" value={form.customer_name} onChange={(e) => setForm((current) => ({ ...current, customer_name: e.target.value }))} /></div>
+            <div className="fieldReact"><label>{copy.labelCustomerPhone || "Customer Phone"}</label><input dir="auto" value={form.customer_phone} onChange={(e) => setForm((current) => ({ ...current, customer_phone: e.target.value }))} /></div>
           </div>
 
           <div className="grid2React">
-            <div className="fieldReact"><label>{copy.labelCity || "City"}</label><select value={form.city} onChange={(e) => handleCityChange(e.target.value)}><option value="">{copy.optionSelectCity || "Select city"}</option>{cityOptions.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}</select></div>
-            <div className="fieldReact"><label>{copy.labelBranchName || "Branch Name"}</label><select value={form.branch_name} onChange={(e) => handleBranchChange(e.target.value)}><option value="">{copy.optionSelectBranch || "Select branch"}</option>{filteredBranches.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select>{form.city && filteredBranches.length === 0 ? <div className="panel-note" style={{ marginTop: 6 }}>{copy.noBranchesForCity || "No branches are available for the selected city yet."}</div> : null}</div>
+            <div className="fieldReact"><label>{copy.labelCity || "City"}</label><select dir="auto" value={form.city} onChange={(e) => handleCityChange(e.target.value)}><option value="">{copy.optionSelectCity || "Select city"}</option>{cityOptions.map((city) => <option key={city.value} value={city.value}>{city.label}</option>)}</select></div>
+            <div className="fieldReact"><label>{copy.labelBranchName || "Branch Name"}</label><select dir="auto" value={form.branch_name} onChange={(e) => handleBranchChange(e.target.value)}><option value="">{copy.optionSelectBranch || "Select branch"}</option>{filteredBranches.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select>{form.city && filteredBranches.length === 0 ? <div className="panel-note" style={{ marginTop: 6 }}>{copy.noBranchesForCity || "No branches are available for the selected city yet."}</div> : null}</div>
           </div>
 
           <div className="grid2React">
-            <div className="fieldReact"><label>{copy.labelBrand || "Brand"}</label><select value={form.brand} onChange={(e) => setForm((current) => ({ ...current, brand: e.target.value }))}><option value="">{copy.optionSelectBrand || "Select brand"}</option>{BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></div>
-            <div className="fieldReact"><label>{copy.labelPriority || "Priority"}</label><select value={form.priority} onChange={(e) => setForm((current) => ({ ...current, priority: e.target.value }))}>{priorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
+            <div className="fieldReact"><label>{copy.labelBrand || "Brand"}</label><select dir="auto" value={form.brand} onChange={(e) => setForm((current) => ({ ...current, brand: e.target.value }))}><option value="">{copy.optionSelectBrand || "Select brand"}</option>{BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></div>
+            <div className="fieldReact"><label>{copy.labelPriority || "Priority"}</label><select dir="auto" value={form.priority} onChange={(e) => setForm((current) => ({ ...current, priority: e.target.value }))}>{priorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
           </div>
 
-          <div className="fieldReact full"><label>{copy.labelStatus || "Status"}</label><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value }))}>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
+          <div className="fieldReact full"><label>{copy.labelStatus || "Status"}</label><select dir="auto" value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value }))}>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
 
-          <div className="fieldReact full"><label>{copy.labelFeedbackType || "Feedback Source"}</label><select value={form.feedback_type} onChange={(e) => setForm((current) => ({ ...current, feedback_type: e.target.value }))}>{sourceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
+          <div className="fieldReact full"><label>{copy.labelFeedbackType || "Feedback Source"}</label><select dir="auto" value={form.feedback_type} onChange={(e) => setForm((current) => ({ ...current, feedback_type: e.target.value }))}>{sourceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
 
           <div className="grid2React">
             <MultiChoiceField
@@ -231,7 +231,7 @@ function NewTicketModal() {
             />
           </div>
 
-          <div className="fieldReact full"><label>{copy.labelDescription || "Description"}</label><textarea value={form.description} onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))} /></div>
+          <div className="fieldReact full"><label>{copy.labelDescription || "Description"}</label><textarea dir="auto" value={form.description} onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))} /></div>
           <div className="fieldReact full"><label>{copy.labelAttachments || "Attachments"}</label><input type="file" multiple onChange={(e) => setForm((current) => ({ ...current, files: Array.from(e.target.files || []) }))} /><div className="panel-note">{form.files.length ? (copy.filesSelectedLabel || "{count} files selected").replace("{count}", form.files.length) : copy.attachmentsHelper || "Upload images, PDFs, or documents."}</div></div>
         </div>
 

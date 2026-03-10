@@ -6,21 +6,21 @@ import { splitMultiValue } from "../../lib/multiValue";
 function renderInfoValue(value) {
   if (Array.isArray(value)) {
     if (value.length === 0) return "--";
-    if (value.length === 1) return value[0];
+    if (value.length === 1) return <bdi className="data-value">{value[0]}</bdi>;
     return (
       <span className="kv-multi-badges">
-        {value.map((entry) => <span key={entry} className="soft-badge">{entry}</span>)}
+        {value.map((entry) => <span key={entry} className="soft-badge"><bdi className="data-value">{entry}</bdi></span>)}
       </span>
     );
   }
 
   const str = String(value ?? "");
   const parts = splitMultiValue(str);
-  if (parts.length <= 1) return str || "--";
+  if (parts.length <= 1) return <bdi className="data-value">{str || "--"}</bdi>;
 
   return (
     <span className="kv-multi-badges">
-      {parts.map((part) => <span key={part} className="soft-badge">{part}</span>)}
+      {parts.map((part) => <span key={part} className="soft-badge"><bdi className="data-value">{part}</bdi></span>)}
     </span>
   );
 }
@@ -47,12 +47,12 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
 
   return (
     <section className="ticket-detail-card">
-        <div className="detail-head">
-          <div className="detail-left">
-            <div className="detail-eyebrow">{copy.detailEyebrow}</div>
-            <div className="detail-title">{ticket.subject || ticket.id}</div>
-            <div className="detail-subtitle"><bdi>{ticket.id}</bdi> • {ticket.branch} • {ticket.statusLabel || ticket.status}</div>
-          </div>
+      <div className="detail-head">
+        <div className="detail-left">
+          <div className="detail-eyebrow">{copy.detailEyebrow}</div>
+          <div className="detail-title"><bdi className="data-value">{ticket.subject || ticket.id}</bdi></div>
+          <div className="detail-subtitle"><bdi className="data-value">{ticket.id}</bdi> • <bdi className="data-value">{ticket.branch}</bdi> • <bdi className="data-value">{ticket.statusLabel || ticket.status}</bdi></div>
+        </div>
         <div className="detail-actions">
           <button type="button" className="ghost-btn" onClick={onAssign}>{copy.btnAssignTxt}</button>
           <button type="button" className="ghost-btn good" onClick={() => onClose(ticket.rowId)} disabled={busy}>{copy.btnCloseTxt}</button>
@@ -79,7 +79,7 @@ function TicketDetailPane({ copy, ticket, onSaveReply, onMarkReplied, onClose, o
             {ticket.attachments?.length ? ticket.attachments.map((file, index) => {
               const url = file.public_url || file.file_url || file.url || "#";
               const name = file.file_name || `file-${index + 1}`;
-              return <div key={`${name}-${index}`}><a href={url} target="_blank" rel="noreferrer">{name}</a>{file.source ? <span className="attachment-meta">({file.source})</span> : null}</div>;
+              return <div key={`${name}-${index}`}><a href={url} target="_blank" rel="noreferrer"><bdi className="data-value">{name}</bdi></a>{file.source ? <span className="attachment-meta">(<bdi className="data-value">{file.source}</bdi>)</span> : null}</div>;
             }) : <div className="panel-note">{copy.noAttachments}</div>}
           </div>
         </article>

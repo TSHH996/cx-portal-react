@@ -8,9 +8,9 @@ function RecentActivityCard({ title, subtitle, rows, emptyText }) {
       <div className="activity-list">
         {rows.length ? rows.map((ticket) => (
           <div key={ticket.rowId} className="activity-row">
-            <div className="activity-head"><span><bdi>{ticket.id}</bdi> - {ticket.statusLabel || ticket.status}</span><span>{ticket.priorityLabel || ticket.priority}</span></div>
-            <div className="activity-branch">{ticket.branch}</div>
-            <div className="activity-meta">{fmtDate(ticket.createdAt)} {ticket.slaRemainingText ? `- ${ticket.slaRemainingText}` : ""}</div>
+            <div className="activity-head"><span><bdi className="data-value">{ticket.id}</bdi> - <bdi className="data-value">{ticket.statusLabel || ticket.status}</bdi></span><span><bdi className="data-value">{ticket.priorityLabel || ticket.priority}</bdi></span></div>
+            <div className="activity-branch"><bdi className="data-value">{ticket.branch}</bdi></div>
+            <div className="activity-meta"><bdi className="data-value">{fmtDate(ticket.createdAt)}</bdi> {ticket.slaRemainingText ? `- ${ticket.slaRemainingText}` : ""}</div>
           </div>
         )) : <div className="empty-dash">{emptyText}</div>}
       </div>

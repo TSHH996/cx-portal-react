@@ -372,9 +372,7 @@ export function buildAgingSection(tickets, language = "en") {
     oldestRows: [...activeTickets].sort((a, b) => a.createdAt - b.createdAt).slice(0, 10).map((ticket) => {
       const hours = Math.floor(ageHours(ticket));
       const days = Math.floor(hours / 24);
-      const age = days > 0
-        ? language === "ar" ? `${days}ي ${hours % 24}س` : `${days}d ${hours % 24}h`
-        : language === "ar" ? `${hours}س` : `${hours}h`;
+      const age = days > 0 ? `${days}d ${hours % 24}h` : `${hours}h`;
       return { ticket: ticket.id, branch: ticket.branch, priority: ticket.priorityLabel || ticket.priority, age, category: ticket.categoryLabel && ticket.categoryLabel !== "--" ? ticket.categoryLabel : ticket.category && ticket.category !== "--" ? ticket.category : "--" };
     }),
     byBranch: rptCountBy(activeTickets, (ticket) => ticket.branch && ticket.branch !== "--" ? ticket.branch : null).slice(0, 8),

@@ -193,32 +193,31 @@ export function resolveBranchCity(branchName, city = "") {
 }
 
 export function getLocalizedStatus(value, language = "en") {
-  return getMapValue("status", value, language) || value;
+  return value || "";
 }
 
 export function getLocalizedPriority(value, language = "en") {
-  return getMapValue("priority", value, language) || value;
+  return value || "";
 }
 
 export function getLocalizedCity(value, language = "en") {
-  if (!value) return language === "ar" ? LABELS.ar.misc.unspecified : "Unspecified";
-  return getMapValue("city", value, language) || value;
+  return value || "Unspecified";
 }
 
 export function getLocalizedSource(value, language = "en") {
-  return getMapValue("source", value, language) || value;
+  return value || "";
 }
 
 export function getLocalizedCategory(value, language = "en") {
-  return getMapValue("category", value, language) || value;
+  return value || "";
 }
 
 export function getLocalizedSubCategory(value, language = "en") {
-  return getMapValue("subCategory", value, language) || value;
+  return value || "";
 }
 
 export function getLocalizedSlaStatus(value, language = "en") {
-  return getMapValue("slaStatus", value, language) || value;
+  return value || "";
 }
 
 export function getLocalizedCityOptions(language = "en") {

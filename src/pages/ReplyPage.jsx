@@ -39,16 +39,16 @@ function ReplyPage() {
             <div className="replyCardSection">
               <div className="replySectionLabel">{copy.replyTicketInfo}</div>
               <div className="replyGridRow">
-                <div><label>{copy.replyTicketNo}</label><input value={ticket.ticket_no || ""} readOnly /></div>
-                <div><label>{copy.replyBranchName}</label><input value={ticket.branch_name || ""} readOnly /></div>
+                <div><label>{copy.replyTicketNo}</label><input dir="auto" value={ticket.ticket_no || ""} readOnly /></div>
+                <div><label>{copy.replyBranchName}</label><input dir="auto" value={ticket.branch_name || ""} readOnly /></div>
               </div>
               <div className="replyGridRow">
-                <div><label>{copy.replyCustomerName}</label><input value={ticket.customer_name || ""} readOnly /></div>
-                <div><label>{copy.replyCustomerPhone}</label><input value={ticket.customer_phone || ""} readOnly /></div>
+                <div><label>{copy.replyCustomerName}</label><input dir="auto" value={ticket.customer_name || ""} readOnly /></div>
+                <div><label>{copy.replyCustomerPhone}</label><input dir="auto" value={ticket.customer_phone || ""} readOnly /></div>
               </div>
               <div>
                 <label>{copy.replyTicketDescription}</label>
-                <textarea value={ticket.description || ""} readOnly />
+                <textarea dir="auto" value={ticket.description || ""} readOnly />
               </div>
             </div>
 
@@ -56,20 +56,20 @@ function ReplyPage() {
               <div className="replySectionLabel">{copy.replyYourReply}</div>
               <div className="replyFieldSpace">
                 <label>{copy.replyTextLabel} <span className="replyRequired">*</span></label>
-                <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={copy.replyTextPlaceholder} disabled={submitted} />
+                <textarea dir="auto" value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={copy.replyTextPlaceholder} disabled={submitted} />
               </div>
 
               <div className="replyFieldSpace">
                 <label>{copy.replyActionTaken} <span className="replyOptional">({copy.replyActionHint})</span></label>
-                <textarea value={actionTaken} onChange={(e) => setActionTaken(e.target.value)} placeholder={copy.replyActionPlaceholder} style={{ minHeight: 90 }} disabled={submitted} />
+                <textarea dir="auto" value={actionTaken} onChange={(e) => setActionTaken(e.target.value)} placeholder={copy.replyActionPlaceholder} style={{ minHeight: 90 }} disabled={submitted} />
               </div>
 
               <div className="replyGridRow">
                 <div>
                   <label>{copy.replyStatusLabel}</label>
-                  <select value={status} onChange={(e) => setStatus(e.target.value)} disabled={submitted}>
-                    <option value="Replied">{copy.filterReplied}</option>
-                    <option value="Closed">{copy.filterClosed}</option>
+                  <select dir="auto" value={status} onChange={(e) => setStatus(e.target.value)} disabled={submitted}>
+                    <option value="Replied">Replied</option>
+                    <option value="Closed">Closed</option>
                   </select>
                 </div>
                 <div>

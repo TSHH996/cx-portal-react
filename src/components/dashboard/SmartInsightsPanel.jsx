@@ -106,9 +106,9 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
       </div>
 
       <div className="insights-controls-grid">
-        <label className="filter-block"><span>{copy.insightsRangeLabel}</span><select value={filters.range} onChange={(e) => setFilters((current) => ({ ...current, range: e.target.value }))}><option value="30d">{copy.insightsRange30d}</option><option value="7d">{copy.insightsRange7d}</option><option value="90d">{copy.insightsRange90d}</option><option value="month">{copy.insightsRangeMonth}</option><option value="all">{copy.insightsRangeAll}</option></select></label>
-        <label className="filter-block"><span>{copy.insightsBranchLabel}</span><select value={filters.branch} onChange={(e) => setFilters((current) => ({ ...current, branch: e.target.value }))}><option value="all">{copy.insightsAllBranches}</option>{branchOptions.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select></label>
-        <label className="filter-block"><span>{copy.insightsCityLabel}</span><select value={filters.city} onChange={(e) => setFilters((current) => {
+        <label className="filter-block"><span>{copy.insightsRangeLabel}</span><select dir="auto" value={filters.range} onChange={(e) => setFilters((current) => ({ ...current, range: e.target.value }))}><option value="30d">{copy.insightsRange30d}</option><option value="7d">{copy.insightsRange7d}</option><option value="90d">{copy.insightsRange90d}</option><option value="month">{copy.insightsRangeMonth}</option><option value="all">{copy.insightsRangeAll}</option></select></label>
+        <label className="filter-block"><span>{copy.insightsBranchLabel}</span><select dir="auto" value={filters.branch} onChange={(e) => setFilters((current) => ({ ...current, branch: e.target.value }))}><option value="all">{copy.insightsAllBranches}</option>{branchOptions.map((branch) => <option key={branch.id || branch.branch_name} value={branch.branch_name}>{branch.branch_name}</option>)}</select></label>
+        <label className="filter-block"><span>{copy.insightsCityLabel}</span><select dir="auto" value={filters.city} onChange={(e) => setFilters((current) => {
           const city = e.target.value;
           const validBranches = city === "all" ? branches : branches.filter((branch) => branch.city === city);
           return {
@@ -117,13 +117,13 @@ function SmartInsightsPanel({ copy, language, tickets, branches, repliesByTicket
             branch: current.branch === "all" || validBranches.some((branch) => branch.branch_name === current.branch) ? current.branch : "all",
           };
         })}><option value="all">{copy.insightsAllCities}</option>{CITIES.map((city) => <option key={city} value={city}>{getLocalizedCity(city, language)}</option>)}</select></label>
-        <label className="filter-block"><span>{copy.insightsBrandLabel}</span><select value={filters.brand} onChange={(e) => setFilters((current) => ({ ...current, brand: e.target.value }))}><option value="all">{copy.insightsAllBrands}</option>{brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></label>
+        <label className="filter-block"><span>{copy.insightsBrandLabel}</span><select dir="auto" value={filters.brand} onChange={(e) => setFilters((current) => ({ ...current, brand: e.target.value }))}><option value="all">{copy.insightsAllBrands}</option>{brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></label>
       </div>
 
       <div className="insights-lookup-box">
         <div className="insights-block-label">{copy.lookupTitle}</div>
         <div className="lookup-row">
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={copy.lookupPlaceholder} />
+          <input dir="auto" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={copy.lookupPlaceholder} />
           <button type="button" className="primary-btn" onClick={handleLookup}>🔎 {copy.btnCustomerLookupTxt}</button>
         </div>
         <div className="panel-note">{copy.lookupHint}</div>

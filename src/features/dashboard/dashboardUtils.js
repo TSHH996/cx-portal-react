@@ -102,12 +102,8 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
   const source = row.feedback_type || row.source || "--";
   const categoryLabels = categoryValues.map((value) => getLocalizedCategory(value, language));
   const subCategoryLabels = subCategoryValues.map((value) => getLocalizedSubCategory(value, language));
-  const customerName = row.customer_name === "Test Customer" && language === "ar"
-    ? "عميل تجريبي"
-    : row.customer_name || "--";
-  const description = row.description === "test" && language === "ar"
-    ? "نص تجريبي"
-    : row.description || "--";
+  const customerName = row.customer_name || "--";
+  const description = row.description || "--";
   const now = Date.now();
 
   let slaComputedStatus = row.sla_status || "pending";
@@ -120,8 +116,8 @@ export function normalizeTicket(row, repliesByTicketId, attachmentsByTicketId, l
     const h = Math.floor(abs / (1000 * 60 * 60));
     const m = Math.floor((abs % (1000 * 60 * 60)) / (1000 * 60));
     slaRemainingText = diffMs >= 0
-      ? language === "ar" ? `متبقي ${h}س ${m}د` : `Remaining ${h}h ${m}m`
-      : language === "ar" ? `متأخر ${h}س ${m}د` : `Overdue ${h}h ${m}m`;
+      ? `Remaining ${h}h ${m}m`
+      : `Overdue ${h}h ${m}m`;
   }
 
   return {
